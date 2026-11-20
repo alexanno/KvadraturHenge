@@ -315,7 +315,11 @@ function tegnTopp(dag) {
 
 // ---------- Tilstand og UI ----------
 function dagIDag() { const n = new Date(), d = Math.floor((Date.UTC(AAR, n.getMonth(), n.getDate()) - Date.UTC(AAR, 0, 1)) / 864e5) + 1; return d; }
-const tilstand = { dag: dagIDag(), min: 12 * 60, tol: TOLERANSE };
+function minINu() {
+  const p = Object.fromEntries(osloFmt.formatToParts(new Date()).map((x) => [x.type, x.value]));
+  return Math.min(1435, Math.floor((+p.hour % 24 * 60 + +p.minute) / 5) * 5);
+}
+const tilstand = { dag: dagIDag(), min: minINu(), tol: TOLERANSE };
 const DAG_I_DAG = dagIDag();
 let spiller = null;
 function oppdater(full = false) {
