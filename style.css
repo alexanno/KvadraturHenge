@@ -1,0 +1,36 @@
+:root{--bg:#0f1720;--panel:#17212c;--line:#2a3846;--fg:#e6edf3;--mut:#8b9bab;--sun:#ffb000;--street:#3b4d60}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 system-ui,-apple-system,Segoe UI,sans-serif}
+header{padding:18px 20px 6px;max-width:1200px;margin:auto}
+h1{margin:0 0 4px;font-size:22px}
+header p{margin:0;color:var(--mut);max-width:760px}
+main{max-width:1200px;margin:auto;padding:12px 20px 40px;display:grid;gap:16px;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}
+.card h2{margin:0 0 8px;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);font-weight:600}
+.wide{grid-column:1/-1}
+canvas{width:100%;display:block}
+.controls{display:grid;gap:10px;margin-top:10px}
+.row{display:grid;grid-template-columns:90px 1fr 140px;gap:10px;align-items:center;color:var(--mut)}
+.row output{color:var(--fg);text-align:right;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--sun)}
+button,input[type=date]{background:#223142;color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:5px 10px;font:inherit}
+button{cursor:pointer}button:hover{background:#2c4057}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+.stat{background:#111a23;border-radius:8px;padding:8px 10px}
+.stat b{display:block;font-size:20px;color:var(--sun);font-variant-numeric:tabular-nums}
+.stat span{color:var(--mut);font-size:12px}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+td,th{padding:4px 6px;border-bottom:1px solid var(--line);text-align:left}
+th{color:var(--mut);font-weight:600;font-size:12px}
+tr.klikk{cursor:pointer}tr.klikk:hover{background:#1f2c3a}
+.note{color:var(--mut);font-size:13px;margin:8px 0 0}
+.verdict{border-left:3px solid var(--sun);padding:6px 12px;margin:8px 0;background:#111a23;border-radius:0 8px 8px 0}
+@media(max-width:860px){main{grid-template-columns:1fr}.row{grid-template-columns:70px 1fr 70px}}
+.idag{font-size:18px;color:var(--fg)!important;margin:6px 0 10px!important;max-width:none!important}
+.idag b{color:var(--sun)}
+.sliderwrap{position:relative;padding-bottom:30px}
+#tidmerker{position:absolute;left:0;right:0;top:20px;height:28px}
+.merke{position:absolute;transform:translateX(-50%);background:none;border:0;padding:0;color:var(--c);font:600 12px system-ui;text-align:center}
+.merke:hover{background:none;text-decoration:underline}
+.merke i{display:block;width:3px;height:9px;margin:0 auto 1px;background:var(--c);border-radius:2px}
+header a{color:var(--sun)}

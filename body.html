@@ -1,0 +1,34 @@
+<header>
+  <h1>☀️ KvadraturHenge</h1>
+  <p id="idag" class="idag"></p>
+  <p>Som <a href="https://en.wikipedia.org/wiki/Manhattanhenge" target="_blank" rel="noopener">Manhattanhenge</a>, bare i Kristiansand: Kvadraturen er et rutenett fra 1641. Her regner vi ut for hvert tidspunkt gjennom året hvor stor del av gatene solen peker rett langs, og søker etter øyeblikket da solen skinner gjennom <em>alle</em> gatene samtidig.</p>
+</header>
+<main>
+  <section class="card">
+    <h2>Kart</h2>
+    <canvas id="kart" width="900" height="640"></canvas>
+    <div class="controls">
+      <div class="row"><label>Dato</label><input type="range" id="dag" min="1" max="365"><input type="date" id="dato" min="2026-01-01" max="2026-12-31"></div>
+      <div class="row"><label>Klokkeslett</label><div class="sliderwrap"><input type="range" id="tid" min="0" max="1435" step="5"><div id="tidmerker"></div></div><output id="tidut"></output></div>
+            <div><button id="spill">▶ Spill av dagen</button></div>
+    </div>
+    <div class="stats">
+      <div class="stat"><b id="sAz">–</b><span>solas retning (kompass)</span></div>
+      <div class="stat"><b id="sH">–</b><span>solhøyde</span></div>
+      <div class="stat"><b id="sAndel">–</b><span>av gatelengden i solretning (±<span id="sTol"></span>°)</span></div>
+    </div>
+    <p class="note">Gater farges etter hvor nær solretningen de ligger: gult = solen peker langs gata, mørkt = solen står på tvers. Tid er norsk lokaltid (sommertid medregnet).</p>
+  </section>
+  <section class="card">
+    <h2>Gateretninger</h2>
+    <canvas id="polar" width="520" height="520"></canvas>
+    <p class="note" id="entropi"></p>
+    <h2 style="margin-top:14px">Henge-datoer 2026</h2>
+    <div id="funn"></div>
+  </section>
+  <section class="card wide">
+    <h2>Hele året: andel av gatene i solretning (klikk for å hoppe til tidspunkt)</h2>
+    <canvas id="varme" width="1200" height="360"></canvas>
+    <p class="note">X: dato. Y: klokkeslett. Lysere = større andel av gatelengden peker mot sola. Mørkt område er natt (sola under horisonten). Hoppet i mars og oktober er overgangen til og fra sommertid.</p>
+  </section>
+</main>
