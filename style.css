@@ -67,3 +67,5 @@ details.om[open] summary{display:none}
   #varme{aspect-ratio:4/3}
   td,th{padding:6px 4px}
 }
+
+header p.lang{font-size:13px;margin-bottom:6px}header p.lang a{color:var(--sun)}

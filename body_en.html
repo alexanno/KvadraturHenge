@@ -1,0 +1,35 @@
+<header>
+  <h1>☀️ KvadraturHenge</h1>
+  <p class="lang"><a href="index.html">Norsk</a> · English</p>
+  <p id="idag" class="idag"></p>
+  <details class="om" open><summary>What is this?</summary><p>Kvadraturen is the historic grid of streets in the centre of Kristiansand, Norway, laid out in 1641 by King Christian IV. Like <a href="https://en.wikipedia.org/wiki/Manhattanhenge" target="_blank" rel="noopener">Manhattanhenge</a> in New York, the sun sometimes lines up with the streets. For every moment of the year we calculate how much of the street network the sun points straight along, and look for the moment it shines down <em>all</em> the streets at once. Drag the sliders to pick a date and time, or tap a yellow time marker to see when to look.</p></details>
+</header>
+<main>
+  <section class="card">
+    <h2 class="hide-m">Map</h2>
+    <canvas id="kart"></canvas>
+    <div class="controls">
+      <div class="row row-dato"><label>Date</label><input type="range" id="dag" min="1" max="365"><input type="date" id="dato" min="2026-01-01" max="2026-12-31"></div>
+      <div class="row"><label>Time</label><div class="sliderwrap"><input type="range" id="tid" min="0" max="1435" step="5"><div id="tidmerker"></div></div><output id="tidut"></output></div>
+      <div><button id="spill">▶ Play the day</button></div>
+    </div>
+    <div class="stats">
+      <div class="stat"><b id="sAz">–</b><span>sun direction (compass bearing)</span></div>
+      <div class="stat"><b id="sH">–</b><span>sun altitude</span></div>
+      <div class="stat"><b id="sAndel">–</b><span>of street length in line with the sun (±<span id="sTol"></span>°)</span></div>
+    </div>
+    <p class="note hide-m">Streets are coloured by how closely they line up with the sun: yellow = the sun points along the street, dark = the sun is across it. Times are Norwegian local time (daylight saving included).</p>
+  </section>
+  <section class="card">
+    <h2>Street directions</h2>
+    <canvas id="polar"></canvas>
+    <p class="note" id="entropi"></p>
+    <h2 style="margin-top:14px">“Henge” dates 2026</h2>
+    <div id="funn"></div>
+  </section>
+  <section class="card wide">
+    <h2>Whole year: share of streets in line with the sun (click to jump to a moment)</h2>
+    <canvas id="varme"></canvas>
+    <p class="note">X: date. Y: time of day. Brighter = larger share of the street length pointing at the sun. Dark area = night (sun below the horizon). The jumps in March and October are the start and end of daylight saving time.</p>
+  </section>
+</main>

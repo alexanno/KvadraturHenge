@@ -70,10 +70,13 @@ details.om[open] summary{display:none}
   #varme{aspect-ratio:4/3}
   td,th{padding:6px 4px}
 }
+
+header p.lang{font-size:13px;margin-bottom:6px}header p.lang a{color:var(--sun)}
 </style></head>
 <body>
 <header>
   <h1>☀️ KvadraturHenge</h1>
+  <p class="lang">Norsk · <a href="en.html">English</a></p>
   <p id="idag" class="idag"></p>
   <details class="om" open><summary>Hva er dette?</summary><p>Som <a href="https://en.wikipedia.org/wiki/Manhattanhenge" target="_blank" rel="noopener">Manhattanhenge</a>, bare i Kristiansand: Kvadraturen er et rutenett fra 1641. Her regner vi ut for hvert tidspunkt gjennom året hvor stor del av gatene solen peker rett langs, og søker etter øyeblikket da solen skinner gjennom <em>alle</em> gatene samtidig.</p></details>
 </header>
@@ -436,6 +439,39 @@ const NSLOT = 1440 / SLOT;
 const RAD = Math.PI / 180;
 const $ = (id) => document.getElementById(id);
 
+// ---------- Språk: styres av <html lang> (nb eller en) ----------
+const LANG = document.documentElement.lang === "en" ? "en" : "nb";
+const TXT = {
+  nb: {
+    loc: "nb-NO", months: ["jan", "feb", "mar", "apr", "mai", "jun", "jul", "aug", "sep", "okt", "nov", "des"],
+    dirs: ["nord", "nordøst", "øst", "sørøst", "sør", "sørvest", "vest", "nordvest"], cardinals: ["N", "Ø", "S", "V"],
+    night: "Sola er under horisonten", play: "▶ Spill av dagen", stop: "⏸ Stopp",
+    streets: (a, b) => `${a}–${b}-gatene`, tip: (akse) => `Sola langs ${akse}°-gatene`,
+    today: "i dag", onDate: (d) => "den " + d,
+    look: (nar, del) => `☀️ For å se lyset ${nar} bør du kikke langs gatene ${del.join(" og ")}.`,
+    peak: (t, dir, h, st) => `kl. <b>${t}</b> fra <b>${dir}</b> (${h}° over horisonten, langs <span style="color:${st.c}">${st.txt}</span>)`,
+    none: (nar) => `${nar[0].toUpperCase() + nar.slice(1)} står ikke sola langs noen av hovedgatene.`,
+    th: ["Datoer", "Kl.", "Hva"], days: (n) => `${n} dager`,
+    rise: (d) => `Soloppgang i ${d}`, set: (d) => `Solnedgang i ${d}`, along: (st) => `langs ${st}`,
+    hengeNote: (tol, h) => `Perioder der sola står rett langs en hovedgate (±${tol}°) mens den er nede ved horisonten (under ${h}°). Forutsetter flat horisont; bygninger og terreng kan flytte datoene noen dager. Klikk på en rad for å se øyeblikket.`,
+    entropi: (e) => `Lengdevektet orientasjonsentropi: ${e} (skala: 1,39 = perfekt rutenett, 3,58 = helt uordnet). Gult felt = gater solen peker langs akkurat nå.`,
+  },
+  en: {
+    loc: "en-GB", months: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+    dirs: ["north", "northeast", "east", "southeast", "south", "southwest", "west", "northwest"], cardinals: ["N", "E", "S", "W"],
+    night: "The sun is below the horizon", play: "▶ Play the day", stop: "⏸ Stop",
+    streets: (a, b) => `${a}–${b} streets`, tip: (akse) => `Sun aligned with the ${akse}° streets`,
+    today: "today", onDate: (d) => "on " + d,
+    look: (nar, del) => `☀️ To see the light ${nar}, look along the streets ${del.join(" and ")}.`,
+    peak: (t, dir, h, st) => `at <b>${t}</b> from the <b>${dir}</b> (${h}° above the horizon, along the <span style="color:${st.c}">${st.txt}</span>)`,
+    none: (nar) => `${nar[0].toUpperCase() + nar.slice(1)} the sun does not line up with any of the main streets.`,
+    th: ["Dates", "Time", "What"], days: (n) => `${n} days`,
+    rise: (d) => `Sunrise in the ${d}`, set: (d) => `Sunset in the ${d}`, along: (st) => `along the ${st}`,
+    hengeNote: (tol, h) => `Periods when the sun points straight along a main street (±${tol}°) while it is low on the horizon (below ${h}°). Assumes a flat horizon; buildings and terrain can shift the dates by a few days. Click a row to see the moment.`,
+    entropi: (e) => `Length-weighted orientation entropy: ${e} (scale: 1.39 = perfect grid, 3.58 = completely disordered). Yellow streets = streets the sun is pointing along right now.`,
+  },
+}[LANG];
+
 // ---------- Geometri: del gatene i små segmenter med lengde og retning (akse 0-180°) ----------
 const mPerLat = 111320, mPerLon = 111320 * Math.cos(LAT * RAD);
 const segmenter = [];
@@ -505,7 +541,7 @@ function sol(dag, minutt) {
   return { az: (p.azimuth / RAD + 180 + 360) % 360, h: p.altitude / RAD }; // SunCalc: azimut fra sør, mot vest
 }
 function datoFraDag(dag) { return new Date(Date.UTC(AAR, 0, dag)); }
-function fmtDato(dag) { return datoFraDag(dag).toLocaleDateString("nb-NO", { day: "numeric", month: "long", timeZone: "UTC" }); }
+function fmtDato(dag) { return datoFraDag(dag).toLocaleDateString(TXT.loc, { day: "numeric", month: "long", timeZone: "UTC" }); }
 function fmtTid(m) { return String(Math.floor(m / 60)).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0"); }
 
 // ---------- Simulering: hele året, hvert 5. minutt ----------
@@ -594,7 +630,7 @@ function tegnKart(s, tol) {
     for (let a = 0; a < 8; a++) { const r = a * Math.PI / 4; kc.beginPath(); kc.moveTo(sx + Math.cos(r) * 16, sy + Math.sin(r) * 16); kc.lineTo(sx + Math.cos(r) * 22, sy + Math.sin(r) * 22); kc.stroke(); }
   } else {
     kc.fillStyle = "rgba(15,23,32,.55)"; kc.fillRect(0, 0, W, H);
-    kc.fillStyle = "#8b9bab"; kc.font = "20px system-ui"; kc.textAlign = "center"; kc.fillText("Sola er under horisonten", W / 2, 34);
+    kc.fillStyle = "#8b9bab"; kc.font = "20px system-ui"; kc.textAlign = "center"; kc.fillText(TXT.night, W / 2, 34);
   }
   // nordpil
   kc.fillStyle = "#8b9bab"; kc.font = "bold 16px system-ui"; kc.textAlign = "center";
@@ -607,7 +643,7 @@ function tegnPolar(s, tol) {
   pc.clearRect(0, 0, W, W);
   pc.strokeStyle = "#2a3846"; pc.fillStyle = "#8b9bab"; pc.font = "14px system-ui"; pc.textAlign = "center"; pc.textBaseline = "middle"; pc.lineWidth = 1;
   for (const f of [0.5, 1]) { pc.beginPath(); pc.arc(c, c, R * f, 0, 7); pc.stroke(); }
-  for (const [t, a] of [["N", 0], ["Ø", 90], ["S", 180], ["V", 270]]) pc.fillText(t, c + Math.sin(a * RAD) * (R + 20), c - Math.cos(a * RAD) * (R + 20));
+  for (const [t, a] of TXT.cardinals.map((t, i) => [t, i * 90])) pc.fillText(t, c + Math.sin(a * RAD) * (R + 20), c - Math.cos(a * RAD) * (R + 20));
   // histogram, 5°-bins, speilet (begge retninger)
   const B = 72, h = new Float64Array(B);
   for (const x of segmenter) { h[Math.floor(x.brg / 5) % B] += x.len; h[Math.floor(((x.brg + 180) % 360) / 5) % B] += x.len; }
@@ -658,7 +694,7 @@ function tegnVarme(dag, min) {
   vx.fillStyle = "#8b9bab"; vx.font = (smal() ? 10 : 12) + "px system-ui"; vx.textAlign = "right"; vx.textBaseline = "middle";
   for (let h = 0; h <= 24; h += 4) { const y = M.t + ph * h / 24; vx.fillText(String(h).padStart(2, "0") + ":00", M.l - 6, y); vx.strokeStyle = "rgba(255,255,255,.08)"; vx.beginPath(); vx.moveTo(M.l, y); vx.lineTo(W - M.r, y); vx.stroke(); }
   vx.textAlign = "center"; vx.textBaseline = "top";
-  for (let m = 0; m < 12; m++) { const d = Math.floor((Date.UTC(AAR, m, 1) - Date.UTC(AAR, 0, 1)) / 864e5); vx.fillText(["jan", "feb", "mar", "apr", "mai", "jun", "jul", "aug", "sep", "okt", "nov", "des"][m], M.l + pw * (d + 15) / 365, H - M.b + 6); }
+  for (let m = 0; m < 12; m++) { const d = Math.floor((Date.UTC(AAR, m, 1) - Date.UTC(AAR, 0, 1)) / 864e5); vx.fillText(TXT.months[m], M.l + pw * (d + 15) / 365, H - M.b + 6); }
   // markør
   const x = M.l + pw * (dag - 0.5) / 365, y = M.t + ph * min / 1440;
   vx.strokeStyle = "#fff"; vx.lineWidth = 1; vx.beginPath(); vx.moveTo(x, M.t); vx.lineTo(x, M.t + ph); vx.moveTo(M.l, y); vx.lineTo(M.l + pw, y); vx.stroke();
@@ -682,10 +718,10 @@ function lagFunn() {
   const per = funn(tilstand.tol);
   best = per.reduce((a, b) => (b.v > a.v ? b : a));
   const perioder = hengePerioder();
-  const rad = (p) => `<tr class="klikk" data-d="${p.midt}" data-m="${p.min}"><td>${fmtDato(p.fra)} – ${fmtDato(p.til)}<br><span class="note">${p.dager} dager</span></td><td>${fmtTid(p.min)}</td><td>${p.min < 720 ? "Soloppgang" : "Solnedgang"} i ${kompassNavn(p.az)}<br><span class="note" style="color:${p.farge}">langs ${kompassNavn(p.akse)}–${kompassNavn((p.akse + 180) % 360)}-gatene</span></td></tr>`;
+  const rad = (p) => `<tr class="klikk" data-d="${p.midt}" data-m="${p.min}"><td>${fmtDato(p.fra)} – ${fmtDato(p.til)}<br><span class="note">${TXT.days(p.dager)}</span></td><td>${fmtTid(p.min)}</td><td>${(p.min < 720 ? TXT.rise : TXT.set)(kompassNavn(p.az))}<br><span class="note" style="color:${p.farge}">${TXT.along(gateNavn(p.akse))}</span></td></tr>`;
   $("funn").innerHTML = `
-    <table><tr><th>Datoer</th><th>Kl.</th><th>Hva</th></tr>${perioder.map(rad).join("")}</table>
-    <p class="note">Perioder der sola står rett langs en hovedgate (±${HENGE_TOL}°) mens den er nede ved horisonten (under ${HENGE_H}°). Forutsetter flat horisont; bygninger og terreng kan flytte datoene noen dager. Klikk på en rad for å se øyeblikket.</p>`;
+    <table><tr>${TXT.th.map((x) => `<th>${x}</th>`).join("")}</tr>${perioder.map(rad).join("")}</table>
+    <p class="note">${TXT.hengeNote(HENGE_TOL, HENGE_H)}</p>`;
   for (const tr of $("funn").querySelectorAll("tr.klikk")) tr.onclick = () => { tilstand.dag = +tr.dataset.d; tilstand.min = +tr.dataset.m; oppdater(); };
 }
 
@@ -718,8 +754,8 @@ function hengePerioder() {
 }
 
 // ---------- Toppunkter: når peker sola langs hver av de to hovedretningene? ----------
-const RETNING = ["nord", "nordøst", "øst", "sørøst", "sør", "sørvest", "vest", "nordvest"];
-const kompassNavn = (az) => RETNING[Math.round(az / 45) % 8];
+const kompassNavn = (az) => TXT.dirs[Math.round(az / 45) % 8];
+const gateNavn = (akse) => TXT.streets(kompassNavn(akse), kompassNavn((akse + 180) % 360));
 const AKSE_FARGE = ["#56b4e9", "#cc79a7"];
 /** For hver hovedakse: tidspunktet den dagen sola peker best langs aksen. Der sola treffer to ganger (sommer),
  *  velges øyeblikket med høyest sol, så lyset faktisk er synlig over takene. */
@@ -744,11 +780,11 @@ function toppunkter(dag) {
 }
 function tegnTopp(dag) {
   const tp = toppunkter(dag);
-  $("tidmerker").innerHTML = tp.map((p) => `<button class="merke" style="left:calc(8px + (100% - 16px) * ${p.min / 1435});--c:${p.farge}" data-m="${p.min}" title="Sola langs ${p.akse}°-gatene"><i></i>${fmtTid(p.min)}</button>`).join("");
+  $("tidmerker").innerHTML = tp.map((p) => `<button class="merke" style="left:calc(8px + (100% - 16px) * ${p.min / 1435});--c:${p.farge}" data-m="${p.min}" title="${TXT.tip(p.akse)}"><i></i>${fmtTid(p.min)}</button>`).join("");
   for (const b of $("tidmerker").querySelectorAll("button")) b.onclick = () => { tilstand.min = +b.dataset.m; oppdater(); };
-  const nar = dag === DAG_I_DAG ? "i dag" : "den " + fmtDato(dag);
-  const del = tp.map((p) => `kl. <b>${fmtTid(p.min)}</b> fra <b>${kompassNavn(p.az)}</b> (${p.h.toFixed(0)}° over horisonten, langs <span style="color:${p.farge}">${kompassNavn(p.akse)}–${kompassNavn((p.akse + 180) % 360)}-gatene</span>)`);
-  $("idag").innerHTML = tp.length ? `☀️ For å se lyset ${nar} bør du kikke langs gatene ${del.join(" og ")}.` : `${nar[0].toUpperCase() + nar.slice(1)} står ikke sola langs noen av hovedgatene.`;
+  const nar = dag === DAG_I_DAG ? TXT.today : TXT.onDate(fmtDato(dag));
+  const del = tp.map((p) => TXT.peak(fmtTid(p.min), kompassNavn(p.az), p.h.toFixed(0), { c: p.farge, txt: gateNavn(p.akse) }));
+  $("idag").innerHTML = tp.length ? TXT.look(nar, del) : TXT.none(nar);
 }
 
 // ---------- Tilstand og UI ----------
@@ -778,11 +814,11 @@ $("dag").oninput = (e) => { tilstand.dag = +e.target.value; oppdater(); };
 $("dato").onchange = (e) => { const d = Math.floor((Date.parse(e.target.value) - Date.UTC(AAR, 0, 1)) / 864e5) + 1; if (d >= 1 && d <= 365) { tilstand.dag = d; oppdater(); } };
 $("tid").oninput = (e) => { tilstand.min = +e.target.value; oppdater(); };
 $("spill").onclick = () => {
-  if (spiller) { clearInterval(spiller); spiller = null; $("spill").textContent = "▶ Spill av dagen"; return; }
-  $("spill").textContent = "⏸ Stopp";
+  if (spiller) { clearInterval(spiller); spiller = null; $("spill").textContent = TXT.play; return; }
+  $("spill").textContent = TXT.stop;
   spiller = setInterval(() => { tilstand.min = (tilstand.min + 5) % 1440; oppdater(); }, 120);
 };
-$("entropi").textContent = `Lengdevektet orientasjonsentropi: ${entropi().toFixed(2)} (skala: 1,39 = perfekt rutenett, 3,58 = helt uordnet). Gult felt = gater solen peker langs akkurat nå.`;
+$("entropi").textContent = TXT.entropi(entropi().toFixed(2).replace(".", LANG === "en" ? "." : ","));
 
 let sistBredde = innerWidth;
 addEventListener("resize", () => { if (innerWidth !== sistBredde) { sistBredde = innerWidth; oppdater(); } });

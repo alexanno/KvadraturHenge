@@ -1,0 +1,830 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KvadraturHenge – when the sun lines up with the streets of Kristiansand</title>
+<style>:root{--bg:#0f1720;--panel:#17212c;--line:#2a3846;--fg:#e6edf3;--mut:#8b9bab;--sun:#ffb000;--street:#3b4d60}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 system-ui,-apple-system,Segoe UI,sans-serif}
+header{padding:18px 20px 6px;max-width:1200px;margin:auto}
+h1{margin:0 0 4px;font-size:22px}
+header p{margin:0;color:var(--mut);max-width:760px}
+main{max-width:1200px;margin:auto;padding:12px 20px 40px;display:grid;gap:16px;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}
+.card h2{margin:0 0 8px;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);font-weight:600}
+.wide{grid-column:1/-1}
+canvas{width:100%;display:block}
+.controls{display:grid;gap:10px;margin-top:10px}
+.row{display:grid;grid-template-columns:90px 1fr 140px;gap:10px;align-items:center;color:var(--mut)}
+.row output{color:var(--fg);text-align:right;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--sun)}
+button,input[type=date]{background:#223142;color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:5px 10px;font:inherit}
+button{cursor:pointer}button:hover{background:#2c4057}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+.stat{background:#111a23;border-radius:8px;padding:8px 10px}
+.stat b{display:block;font-size:20px;color:var(--sun);font-variant-numeric:tabular-nums}
+.stat span{color:var(--mut);font-size:12px}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+td,th{padding:4px 6px;border-bottom:1px solid var(--line);text-align:left}
+th{color:var(--mut);font-weight:600;font-size:12px}
+tr.klikk{cursor:pointer}tr.klikk:hover{background:#1f2c3a}
+.note{color:var(--mut);font-size:13px;margin:8px 0 0}
+.verdict{border-left:3px solid var(--sun);padding:6px 12px;margin:8px 0;background:#111a23;border-radius:0 8px 8px 0}
+@media(max-width:860px){main{grid-template-columns:1fr}.row{grid-template-columns:70px 1fr 70px}}
+.idag{font-size:18px;color:var(--fg)!important;margin:6px 0 10px!important;max-width:none!important}
+.idag b{color:var(--sun)}
+.sliderwrap{position:relative;padding-bottom:30px}
+#tidmerker{position:absolute;left:0;right:0;top:20px;height:28px}
+.merke{position:absolute;transform:translateX(-50%);background:none;border:0;padding:0;color:var(--c);font:600 12px system-ui;text-align:center}
+.merke:hover{background:none;text-decoration:underline}
+.merke i{display:block;width:3px;height:9px;margin:0 auto 1px;background:var(--c);border-radius:2px}
+header a{color:var(--sun)}
+#kart{aspect-ratio:900/640}
+#polar{aspect-ratio:1/1;max-width:520px;margin:auto}
+#varme{aspect-ratio:1200/360}
+details.om summary{cursor:pointer;color:var(--mut);font-size:13px;margin-bottom:4px}
+details.om[open] summary{display:none}
+@media(max-width:600px){
+  body{font-size:14px}
+  header{padding:10px 12px 2px}
+  h1{font-size:18px}
+  .idag{font-size:15px;line-height:1.4;margin:4px 0 8px!important}
+  details.om summary{display:block!important;margin:0 0 4px}
+  main{padding:6px 8px 28px;gap:10px}
+  .card{padding:8px;border-radius:8px}
+  .hide-m{display:none}
+  #kart{aspect-ratio:1/1;max-height:68vh;touch-action:pan-y}
+  .controls{gap:6px;margin-top:6px}
+  .row{grid-template-columns:1fr auto;gap:2px 10px}
+  .row label{grid-column:1/-1;font-size:12px}
+  .row-dato input[type=range]{grid-column:1}
+  input[type=range]{height:34px;margin:0}
+  input[type=date],button{font-size:16px;min-height:40px}
+  .row output{font-size:18px;font-weight:600}
+  .sliderwrap{padding-bottom:38px}
+  #tidmerker{top:28px}
+  .merke{font-size:13px;padding:2px 6px}
+  #spill{width:100%}
+  .stats{gap:6px}
+  .stat{padding:6px 8px}
+  .stat b{font-size:16px}
+  .stat span{font-size:11px;line-height:1.2;display:block}
+  #varme{aspect-ratio:4/3}
+  td,th{padding:6px 4px}
+}
+
+header p.lang{font-size:13px;margin-bottom:6px}header p.lang a{color:var(--sun)}
+</style></head>
+<body>
+<header>
+  <h1>☀️ KvadraturHenge</h1>
+  <p class="lang"><a href="index.html">Norsk</a> · English</p>
+  <p id="idag" class="idag"></p>
+  <details class="om" open><summary>What is this?</summary><p>Kvadraturen is the historic grid of streets in the centre of Kristiansand, Norway, laid out in 1641 by King Christian IV. Like <a href="https://en.wikipedia.org/wiki/Manhattanhenge" target="_blank" rel="noopener">Manhattanhenge</a> in New York, the sun sometimes lines up with the streets. For every moment of the year we calculate how much of the street network the sun points straight along, and look for the moment it shines down <em>all</em> the streets at once. Drag the sliders to pick a date and time, or tap a yellow time marker to see when to look.</p></details>
+</header>
+<main>
+  <section class="card">
+    <h2 class="hide-m">Map</h2>
+    <canvas id="kart"></canvas>
+    <div class="controls">
+      <div class="row row-dato"><label>Date</label><input type="range" id="dag" min="1" max="365"><input type="date" id="dato" min="2026-01-01" max="2026-12-31"></div>
+      <div class="row"><label>Time</label><div class="sliderwrap"><input type="range" id="tid" min="0" max="1435" step="5"><div id="tidmerker"></div></div><output id="tidut"></output></div>
+      <div><button id="spill">▶ Play the day</button></div>
+    </div>
+    <div class="stats">
+      <div class="stat"><b id="sAz">–</b><span>sun direction (compass bearing)</span></div>
+      <div class="stat"><b id="sH">–</b><span>sun altitude</span></div>
+      <div class="stat"><b id="sAndel">–</b><span>of street length in line with the sun (±<span id="sTol"></span>°)</span></div>
+    </div>
+    <p class="note hide-m">Streets are coloured by how closely they line up with the sun: yellow = the sun points along the street, dark = the sun is across it. Times are Norwegian local time (daylight saving included).</p>
+  </section>
+  <section class="card">
+    <h2>Street directions</h2>
+    <canvas id="polar"></canvas>
+    <p class="note" id="entropi"></p>
+    <h2 style="margin-top:14px">“Henge” dates 2026</h2>
+    <div id="funn"></div>
+  </section>
+  <section class="card wide">
+    <h2>Whole year: share of streets in line with the sun (click to jump to a moment)</h2>
+    <canvas id="varme"></canvas>
+    <p class="note">X: date. Y: time of day. Brighter = larger share of the street length pointing at the sun. Dark area = night (sun below the horizon). The jumps in March and October are the start and end of daylight saving time.</p>
+  </section>
+</main>
+
+<script>/*
+ (c) 2011-2015, Vladimir Agafonkin
+ SunCalc is a JavaScript library for calculating sun/moon position and light phases.
+ https://github.com/mourner/suncalc
+*/
+
+(function () { 'use strict';
+
+// shortcuts for easier to read formulas
+
+var PI   = Math.PI,
+    sin  = Math.sin,
+    cos  = Math.cos,
+    tan  = Math.tan,
+    asin = Math.asin,
+    atan = Math.atan2,
+    acos = Math.acos,
+    rad  = PI / 180;
+
+// sun calculations are based on http://aa.quae.nl/en/reken/zonpositie.html formulas
+
+
+// date/time constants and conversions
+
+var dayMs = 1000 * 60 * 60 * 24,
+    J1970 = 2440588,
+    J2000 = 2451545;
+
+function toJulian(date) { return date.valueOf() / dayMs - 0.5 + J1970; }
+function fromJulian(j)  { return new Date((j + 0.5 - J1970) * dayMs); }
+function toDays(date)   { return toJulian(date) - J2000; }
+
+
+// general calculations for position
+
+var e = rad * 23.4397; // obliquity of the Earth
+
+function rightAscension(l, b) { return atan(sin(l) * cos(e) - tan(b) * sin(e), cos(l)); }
+function declination(l, b)    { return asin(sin(b) * cos(e) + cos(b) * sin(e) * sin(l)); }
+
+function azimuth(H, phi, dec)  { return atan(sin(H), cos(H) * sin(phi) - tan(dec) * cos(phi)); }
+function altitude(H, phi, dec) { return asin(sin(phi) * sin(dec) + cos(phi) * cos(dec) * cos(H)); }
+
+function siderealTime(d, lw) { return rad * (280.16 + 360.9856235 * d) - lw; }
+
+function astroRefraction(h) {
+    if (h < 0) // the following formula works for positive altitudes only.
+        h = 0; // if h = -0.08901179 a div/0 would occur.
+
+    // formula 16.4 of "Astronomical Algorithms" 2nd edition by Jean Meeus (Willmann-Bell, Richmond) 1998.
+    // 1.02 / tan(h + 10.26 / (h + 5.10)) h in degrees, result in arc minutes -> converted to rad:
+    return 0.0002967 / Math.tan(h + 0.00312536 / (h + 0.08901179));
+}
+
+// general sun calculations
+
+function solarMeanAnomaly(d) { return rad * (357.5291 + 0.98560028 * d); }
+
+function eclipticLongitude(M) {
+
+    var C = rad * (1.9148 * sin(M) + 0.02 * sin(2 * M) + 0.0003 * sin(3 * M)), // equation of center
+        P = rad * 102.9372; // perihelion of the Earth
+
+    return M + C + P + PI;
+}
+
+function sunCoords(d) {
+
+    var M = solarMeanAnomaly(d),
+        L = eclipticLongitude(M);
+
+    return {
+        dec: declination(L, 0),
+        ra: rightAscension(L, 0)
+    };
+}
+
+
+var SunCalc = {};
+
+
+// calculates sun position for a given date and latitude/longitude
+
+SunCalc.getPosition = function (date, lat, lng) {
+
+    var lw  = rad * -lng,
+        phi = rad * lat,
+        d   = toDays(date),
+
+        c  = sunCoords(d),
+        H  = siderealTime(d, lw) - c.ra;
+
+    return {
+        azimuth: azimuth(H, phi, c.dec),
+        altitude: altitude(H, phi, c.dec)
+    };
+};
+
+
+// sun times configuration (angle, morning name, evening name)
+
+var times = SunCalc.times = [
+    [-0.833, 'sunrise',       'sunset'      ],
+    [  -0.3, 'sunriseEnd',    'sunsetStart' ],
+    [    -6, 'dawn',          'dusk'        ],
+    [   -12, 'nauticalDawn',  'nauticalDusk'],
+    [   -18, 'nightEnd',      'night'       ],
+    [     6, 'goldenHourEnd', 'goldenHour'  ]
+];
+
+// adds a custom time to the times config
+
+SunCalc.addTime = function (angle, riseName, setName) {
+    times.push([angle, riseName, setName]);
+};
+
+
+// calculations for sun times
+
+var J0 = 0.0009;
+
+function julianCycle(d, lw) { return Math.round(d - J0 - lw / (2 * PI)); }
+
+function approxTransit(Ht, lw, n) { return J0 + (Ht + lw) / (2 * PI) + n; }
+function solarTransitJ(ds, M, L)  { return J2000 + ds + 0.0053 * sin(M) - 0.0069 * sin(2 * L); }
+
+function hourAngle(h, phi, d) { return acos((sin(h) - sin(phi) * sin(d)) / (cos(phi) * cos(d))); }
+function observerAngle(height) { return -2.076 * Math.sqrt(height) / 60; }
+
+// returns set time for the given sun altitude
+function getSetJ(h, lw, phi, dec, n, M, L) {
+
+    var w = hourAngle(h, phi, dec),
+        a = approxTransit(w, lw, n);
+    return solarTransitJ(a, M, L);
+}
+
+
+// calculates sun times for a given date, latitude/longitude, and, optionally,
+// the observer height (in meters) relative to the horizon
+
+SunCalc.getTimes = function (date, lat, lng, height) {
+
+    height = height || 0;
+
+    var lw = rad * -lng,
+        phi = rad * lat,
+
+        dh = observerAngle(height),
+
+        d = toDays(date),
+        n = julianCycle(d, lw),
+        ds = approxTransit(0, lw, n),
+
+        M = solarMeanAnomaly(ds),
+        L = eclipticLongitude(M),
+        dec = declination(L, 0),
+
+        Jnoon = solarTransitJ(ds, M, L),
+
+        i, len, time, h0, Jset, Jrise;
+
+
+    var result = {
+        solarNoon: fromJulian(Jnoon),
+        nadir: fromJulian(Jnoon - 0.5)
+    };
+
+    for (i = 0, len = times.length; i < len; i += 1) {
+        time = times[i];
+        h0 = (time[0] + dh) * rad;
+
+        Jset = getSetJ(h0, lw, phi, dec, n, M, L);
+        Jrise = Jnoon - (Jset - Jnoon);
+
+        result[time[1]] = fromJulian(Jrise);
+        result[time[2]] = fromJulian(Jset);
+    }
+
+    return result;
+};
+
+
+// moon calculations, based on http://aa.quae.nl/en/reken/hemelpositie.html formulas
+
+function moonCoords(d) { // geocentric ecliptic coordinates of the moon
+
+    var L = rad * (218.316 + 13.176396 * d), // ecliptic longitude
+        M = rad * (134.963 + 13.064993 * d), // mean anomaly
+        F = rad * (93.272 + 13.229350 * d),  // mean distance
+
+        l  = L + rad * 6.289 * sin(M), // longitude
+        b  = rad * 5.128 * sin(F),     // latitude
+        dt = 385001 - 20905 * cos(M);  // distance to the moon in km
+
+    return {
+        ra: rightAscension(l, b),
+        dec: declination(l, b),
+        dist: dt
+    };
+}
+
+SunCalc.getMoonPosition = function (date, lat, lng) {
+
+    var lw  = rad * -lng,
+        phi = rad * lat,
+        d   = toDays(date),
+
+        c = moonCoords(d),
+        H = siderealTime(d, lw) - c.ra,
+        h = altitude(H, phi, c.dec),
+        // formula 14.1 of "Astronomical Algorithms" 2nd edition by Jean Meeus (Willmann-Bell, Richmond) 1998.
+        pa = atan(sin(H), tan(phi) * cos(c.dec) - sin(c.dec) * cos(H));
+
+    h = h + astroRefraction(h); // altitude correction for refraction
+
+    return {
+        azimuth: azimuth(H, phi, c.dec),
+        altitude: h,
+        distance: c.dist,
+        parallacticAngle: pa
+    };
+};
+
+
+// calculations for illumination parameters of the moon,
+// based on http://idlastro.gsfc.nasa.gov/ftp/pro/astro/mphase.pro formulas and
+// Chapter 48 of "Astronomical Algorithms" 2nd edition by Jean Meeus (Willmann-Bell, Richmond) 1998.
+
+SunCalc.getMoonIllumination = function (date) {
+
+    var d = toDays(date || new Date()),
+        s = sunCoords(d),
+        m = moonCoords(d),
+
+        sdist = 149598000, // distance from Earth to Sun in km
+
+        phi = acos(sin(s.dec) * sin(m.dec) + cos(s.dec) * cos(m.dec) * cos(s.ra - m.ra)),
+        inc = atan(sdist * sin(phi), m.dist - sdist * cos(phi)),
+        angle = atan(cos(s.dec) * sin(s.ra - m.ra), sin(s.dec) * cos(m.dec) -
+                cos(s.dec) * sin(m.dec) * cos(s.ra - m.ra));
+
+    return {
+        fraction: (1 + cos(inc)) / 2,
+        phase: 0.5 + 0.5 * inc * (angle < 0 ? -1 : 1) / Math.PI,
+        angle: angle
+    };
+};
+
+
+function hoursLater(date, h) {
+    return new Date(date.valueOf() + h * dayMs / 24);
+}
+
+// calculations for moon rise/set times are based on http://www.stargazing.net/kepler/moonrise.html article
+
+SunCalc.getMoonTimes = function (date, lat, lng, inUTC) {
+    var t = new Date(date);
+    if (inUTC) t.setUTCHours(0, 0, 0, 0);
+    else t.setHours(0, 0, 0, 0);
+
+    var hc = 0.133 * rad,
+        h0 = SunCalc.getMoonPosition(t, lat, lng).altitude - hc,
+        h1, h2, rise, set, a, b, xe, ye, d, roots, x1, x2, dx;
+
+    // go in 2-hour chunks, each time seeing if a 3-point quadratic curve crosses zero (which means rise or set)
+    for (var i = 1; i <= 24; i += 2) {
+        h1 = SunCalc.getMoonPosition(hoursLater(t, i), lat, lng).altitude - hc;
+        h2 = SunCalc.getMoonPosition(hoursLater(t, i + 1), lat, lng).altitude - hc;
+
+        a = (h0 + h2) / 2 - h1;
+        b = (h2 - h0) / 2;
+        xe = -b / (2 * a);
+        ye = (a * xe + b) * xe + h1;
+        d = b * b - 4 * a * h1;
+        roots = 0;
+
+        if (d >= 0) {
+            dx = Math.sqrt(d) / (Math.abs(a) * 2);
+            x1 = xe - dx;
+            x2 = xe + dx;
+            if (Math.abs(x1) <= 1) roots++;
+            if (Math.abs(x2) <= 1) roots++;
+            if (x1 < -1) x1 = x2;
+        }
+
+        if (roots === 1) {
+            if (h0 < 0) rise = i + x1;
+            else set = i + x1;
+
+        } else if (roots === 2) {
+            rise = i + (ye < 0 ? x2 : x1);
+            set = i + (ye < 0 ? x1 : x2);
+        }
+
+        if (rise && set) break;
+
+        h0 = h2;
+    }
+
+    var result = {};
+
+    if (rise) result.rise = hoursLater(t, rise);
+    if (set) result.set = hoursLater(t, set);
+
+    if (!rise && !set) result[ye > 0 ? 'alwaysUp' : 'alwaysDown'] = true;
+
+    return result;
+};
+
+
+// export as Node module / AMD module / browser variable
+if (typeof exports === 'object' && typeof module !== 'undefined') module.exports = SunCalc;
+else if (typeof define === 'function' && define.amd) define(SunCalc);
+else window.SunCalc = SunCalc;
+
+}());
+</script>
+<script>const GATER = [{"navn": "Dronningens gate", "lengde": 73.8, "retning": 44.2, "coords": [[7.99402, 58.14335], [7.9939, 58.14328], [7.99324, 58.14293], [7.99314, 58.14287]]}, {"navn": "Kristian IVs gate", "lengde": 135.3, "retning": 43.5, "coords": [[7.98994, 58.14715], [7.98848, 58.14633], [7.98845, 58.14632], [7.98836, 58.14627]]}, {"navn": "Vestre Strandgate", "lengde": 79.5, "retning": 313.6, "coords": [[7.98836, 58.14627], [7.9878, 58.14655], [7.98738, 58.14676]]}, {"navn": "Vestre Strandgate", "lengde": 75.3, "retning": 134.4, "coords": [[7.98928, 58.14579], [7.98911, 58.14589], [7.98836, 58.14627]]}, {"navn": "Skippergata", "lengde": 8.4, "retning": 225.4, "coords": [[7.99011, 58.14525], [7.99021, 58.14531]]}, {"navn": "Skippergata", "lengde": 138.8, "retning": 44.5, "coords": [[7.99187, 58.1462], [7.99166, 58.14609], [7.99029, 58.14535], [7.99021, 58.14531]]}, {"navn": "Vestre Strandgate", "lengde": 77.2, "retning": 314.6, "coords": [[7.99021, 58.14531], [7.98987, 58.14548], [7.98948, 58.14568], [7.98928, 58.14579]]}, {"navn": "Vestre Strandgate", "lengde": 81.0, "retning": 134.0, "coords": [[7.99121, 58.1448], [7.99108, 58.14486], [7.99034, 58.14524], [7.99021, 58.14531]]}, {"navn": "Gyldenløves gate", "lengde": 8.8, "retning": 211.7, "coords": [[7.99113, 58.14473], [7.99121, 58.1448]]}, {"navn": "Gyldenløves gate", "lengde": 140.1, "retning": 43.1, "coords": [[7.99284, 58.14572], [7.99253, 58.14555], [7.99128, 58.14484], [7.99121, 58.1448]]}, {"navn": "Vestre Strandgate", "lengde": 75.6, "retning": 133.5, "coords": [[7.99214, 58.14433], [7.99199, 58.14441], [7.99121, 58.1448]]}, {"navn": "Rådhusgata", "lengde": 8.2, "retning": 228.2, "coords": [[7.99204, 58.14428], [7.99214, 58.14433]]}, {"navn": "Rådhusgata", "lengde": 140.6, "retning": 44.6, "coords": [[7.99382, 58.14523], [7.99358, 58.14511], [7.99222, 58.14438], [7.99214, 58.14433]]}, {"navn": "Vestre Strandgate", "lengde": 82.9, "retning": 133.5, "coords": [[7.99316, 58.14382], [7.99301, 58.14391], [7.99251, 58.14415], [7.99225, 58.14428], [7.99214, 58.14433]]}, {"navn": "Festningsgata", "lengde": 75.3, "retning": 135.7, "coords": [[7.99986, 58.14557], [7.99979, 58.14561], [7.99935, 58.14584], [7.9991, 58.14598], [7.99897, 58.14605]]}, {"navn": "Festningsgata", "lengde": 77.4, "retning": 316.9, "coords": [[7.99807, 58.14656], [7.99814, 58.14652], [7.99838, 58.14638], [7.99883, 58.14613], [7.99897, 58.14605]]}, {"navn": "Dronningens gate", "lengde": 138.1, "retning": 224.0, "coords": [[7.99733, 58.14516], [7.99746, 58.14523], [7.99808, 58.14557], [7.99878, 58.14595], [7.99881, 58.14597], [7.99897, 58.14605]]}, {"navn": "Dronningens gate", "lengde": 149.2, "retning": 44.2, "coords": [[8.00074, 58.14702], [8.00072, 58.147], [8.00064, 58.14696], [7.99912, 58.14614], [7.99897, 58.14605]]}, {"navn": "Kirkegata", "lengde": 75.9, "retning": 131.8, "coords": [[7.9983, 58.14471], [7.99822, 58.14474], [7.99794, 58.14487], [7.99745, 58.1451], [7.99733, 58.14516]]}, {"navn": "Dronningens gate", "lengde": 137.2, "retning": 223.5, "coords": [[7.99572, 58.14427], [7.99579, 58.14431], [7.99723, 58.14511], [7.99733, 58.14516]]}, {"navn": "Kirkegata", "lengde": 76.3, "retning": 313.1, "coords": [[7.99638, 58.14563], [7.99645, 58.1456], [7.99721, 58.14522], [7.99733, 58.14516]]}, {"navn": "Gyldenløves gate", "lengde": 136.9, "retning": 222.5, "coords": [[7.99284, 58.14572], [7.99314, 58.14588], [7.99345, 58.14606], [7.99354, 58.14614], [7.99441, 58.14663]]}, {"navn": "Kirkegata", "lengde": 72.8, "retning": 313.9, "coords": [[7.99352, 58.14708], [7.99359, 58.14704], [7.99441, 58.14663]]}, {"navn": "Kirkegata", "lengde": 75.3, "retning": 132.8, "coords": [[7.99535, 58.14617], [7.99502, 58.14634], [7.99465, 58.14651], [7.99451, 58.14658], [7.99446, 58.1466], [7.99441, 58.14663]]}, {"navn": "Gyldenløves gate", "lengde": 143.3, "retning": 44.1, "coords": [[7.99611, 58.14755], [7.99602, 58.1475], [7.99556, 58.14726], [7.99441, 58.14663]]}, {"navn": "Markens gate", "lengde": 78.0, "retning": 133.7, "coords": [[7.99572, 58.14427], [7.99564, 58.14431], [7.99563, 58.14431], [7.99476, 58.14475]]}, {"navn": "Tollbodgata", "lengde": 139.7, "retning": 222.1, "coords": [[7.99476, 58.14475], [7.99326, 58.14387], [7.99316, 58.14382]]}, {"navn": "Markens gate", "lengde": 58.4, "retning": 313.9, "coords": [[7.99404, 58.14512], [7.9947, 58.14478], [7.99476, 58.14475]]}, {"navn": "Tollbodgata", "lengde": 136.2, "retning": 44.2, "coords": [[7.99638, 58.14563], [7.99628, 58.14557], [7.99476, 58.14475]]}, {"navn": "Østre Strandgate", "lengde": 140.9, "retning": 42.4, "coords": [[7.99925, 58.14423], [7.99918, 58.14419], [7.9984, 58.14373], [7.99771, 58.14334], [7.99763, 58.1433]]}, {"navn": "Østre Strandgate", "lengde": 141.1, "retning": 222.1, "coords": [[7.99602, 58.14235], [7.99611, 58.14241], [7.99615, 58.14242], [7.99661, 58.1427], [7.99754, 58.14325], [7.99763, 58.1433]]}, {"navn": "Markens gate", "lengde": 150.5, "retning": 133.6, "coords": [[7.99949, 58.14236], [7.99906, 58.14259], [7.99884, 58.1427], [7.99867, 58.14278], [7.99772, 58.14326], [7.99763, 58.1433]]}, {"navn": "Markens gate", "lengde": 79.2, "retning": 314.1, "coords": [[7.99666, 58.14379], [7.99673, 58.14376], [7.99755, 58.14334], [7.99763, 58.1433]]}, {"navn": "Markens gate", "lengde": 77.2, "retning": 313.4, "coords": [[7.98994, 58.14715], [7.99002, 58.14711], [7.99084, 58.14671], [7.9909, 58.14667]]}, {"navn": "Henrik Wergelands gate", "lengde": 136.7, "retning": 224.2, "coords": [[7.98928, 58.14579], [7.98938, 58.14586], [7.9909, 58.14667]]}, {"navn": "Markens gate", "lengde": 77.8, "retning": 133.0, "coords": [[7.99187, 58.1462], [7.991, 58.14663], [7.9909, 58.14667]]}, {"navn": "Henrik Wergelands gate", "lengde": 138.2, "retning": 44.8, "coords": [[7.9909, 58.14667], [7.99249, 58.14752], [7.99256, 58.14756]]}, {"navn": "Markens gate", "lengde": 78.1, "retning": 312.7, "coords": [[7.98897, 58.14763], [7.98901, 58.14761], [7.98986, 58.14719], [7.98994, 58.14715]]}, {"navn": "Kristian IVs gate", "lengde": 139.1, "retning": 44.9, "coords": [[7.99162, 58.14804], [7.99154, 58.148], [7.99128, 58.14785], [7.98994, 58.14715]]}, {"navn": "Tordenskjolds gate", "lengde": 60.1, "retning": 44.1, "coords": [[7.98968, 58.14802], [7.98897, 58.14763]]}, {"navn": "Tordenskjolds gate", "lengde": 134.1, "retning": 224.0, "coords": [[7.98738, 58.14676], [7.98749, 58.14682], [7.98752, 58.14684], [7.98827, 58.14725], [7.98845, 58.14735], [7.98897, 58.14763]]}, {"navn": "Tordenskjolds gate", "lengde": 79.9, "retning": 224.1, "coords": [[7.98968, 58.14802], [7.99063, 58.14853]]}, {"navn": "Tordenskjolds gate", "lengde": 72.8, "retning": 44.6, "coords": [[7.9915, 58.149], [7.99071, 58.14857], [7.99063, 58.14853]]}, {"navn": "Kirkegata", "lengde": 80.5, "retning": 133.4, "coords": [[7.99162, 58.14804], [7.99153, 58.14808], [7.99073, 58.1485], [7.99063, 58.14853]]}, {"navn": "Kirkegata", "lengde": 75.1, "retning": 312.4, "coords": [[7.98968, 58.14899], [7.98999, 58.14883], [7.99024, 58.1487], [7.99053, 58.14856], [7.99063, 58.14853]]}, {"navn": "Tordenskjolds gate", "lengde": 9.8, "retning": 44.6, "coords": [[7.99263, 58.14961], [7.99251, 58.14955]]}, {"navn": "Tordenskjolds gate", "lengde": 85.8, "retning": 224.1, "coords": [[7.9915, 58.149], [7.99238, 58.14947], [7.99251, 58.14955]]}, {"navn": "Festningsgata", "lengde": 80.5, "retning": 136.6, "coords": [[7.99251, 58.14955], [7.99264, 58.14947], [7.99346, 58.14903]]}, {"navn": "Stener Heyerdahls gate", "lengde": 76.7, "retning": 312.3, "coords": [[7.99155, 58.15001], [7.99184, 58.14992], [7.9924, 58.14962], [7.99251, 58.14955]]}, {"navn": "Tordenskjolds gate", "lengde": 20.6, "retning": 223.4, "coords": [[7.99633, 58.15162], [7.99657, 58.15175]]}, {"navn": "Elvegata", "lengde": 77.9, "retning": 126.9, "coords": [[7.99763, 58.15133], [7.99671, 58.15169], [7.99657, 58.15175]]}, {"navn": "Kristian IVs gate", "lengde": 154.1, "retning": 44.4, "coords": [[7.99346, 58.14903], [7.99335, 58.14897], [7.99307, 58.14883], [7.9929, 58.14874], [7.99262, 58.1486], [7.99169, 58.14808], [7.99162, 58.14804]]}, {"navn": "Kirkegata", "lengde": 76.8, "retning": 134.0, "coords": [[7.99256, 58.14756], [7.99247, 58.1476], [7.9917, 58.14799], [7.99162, 58.14804]]}, {"navn": "Festningsgata", "lengde": 77.1, "retning": 135.5, "coords": [[7.99346, 58.14903], [7.99372, 58.14888], [7.99423, 58.1486], [7.99438, 58.14853]]}, {"navn": "Kristian IVs gate", "lengde": 131.0, "retning": 43.4, "coords": [[7.99659, 58.15076], [7.99506, 58.1499]]}, {"navn": "Holbergs gate", "lengde": 80.0, "retning": 314.6, "coords": [[7.99409, 58.15041], [7.99506, 58.1499]]}, {"navn": "Kristian IVs gate", "lengde": 124.0, "retning": 224.4, "coords": [[7.99358, 58.1491], [7.99367, 58.14915], [7.99439, 58.14954], [7.99506, 58.1499]]}, {"navn": "Holbergs gate", "lengde": 79.9, "retning": 133.9, "coords": [[7.99604, 58.1494], [7.99556, 58.14964], [7.99506, 58.1499]]}, {"navn": "Henrik Wergelands gate", "lengde": 8.5, "retning": 224.3, "coords": [[7.98917, 58.14574], [7.98928, 58.14579]]}, {"navn": "Kirkegata", "lengde": 77.3, "retning": 133.2, "coords": [[7.99352, 58.14708], [7.99343, 58.14713], [7.99266, 58.14751], [7.99256, 58.14756]]}, {"navn": "Henrik Wergelands gate", "lengde": 152.1, "retning": 44.6, "coords": [[7.99256, 58.14756], [7.99263, 58.1476], [7.99285, 58.14771], [7.99426, 58.14847], [7.99438, 58.14853]]}, {"navn": "Henrik Wergelands gate", "lengde": 10.5, "retning": 48.8, "coords": [[7.99451, 58.14859], [7.99438, 58.14853]]}, {"navn": "Festningsgata", "lengde": 74.4, "retning": 135.4, "coords": [[7.99438, 58.14853], [7.99454, 58.14845], [7.99512, 58.14813], [7.99527, 58.14805]]}, {"navn": "Holbergs gate", "lengde": 70.8, "retning": 134.8, "coords": [[7.99689, 58.14895], [7.99604, 58.1494]]}, {"navn": "Henrik Wergelands gate", "lengde": 135.9, "retning": 45.0, "coords": [[7.99767, 58.15027], [7.99604, 58.1494]]}, {"navn": "Henrik Wergelands gate", "lengde": 126.9, "retning": 224.9, "coords": [[7.99451, 58.14859], [7.99459, 58.14863], [7.99517, 58.14894], [7.99556, 58.14915], [7.99604, 58.1494]]}, {"navn": "Elvegata", "lengde": 71.3, "retning": 126.5, "coords": [[7.99968, 58.15051], [7.9987, 58.15089]]}, {"navn": "Henrik Wergelands gate", "lengde": 91.9, "retning": 221.0, "coords": [[7.99767, 58.15027], [7.9987, 58.15089]]}, {"navn": "Elvegata", "lengde": 80.1, "retning": 308.2, "coords": [[7.99763, 58.15133], [7.99803, 58.15117], [7.9987, 58.15089]]}, {"navn": "", "lengde": 139.6, "retning": 352.3, "coords": [[7.99847, 58.1518], [7.99855, 58.15178], [7.99938, 58.15135], [7.99938, 58.1513], [7.99881, 58.15094], [7.9988, 58.15093], [7.9987, 58.15089]]}, {"navn": "Skippergata", "lengde": 137.8, "retning": 224.6, "coords": [[7.99187, 58.1462], [7.99218, 58.14637], [7.99344, 58.14704], [7.99352, 58.14708]]}, {"navn": "Skippergata", "lengde": 149.4, "retning": 43.5, "coords": [[7.99527, 58.14805], [7.99515, 58.14797], [7.99451, 58.14762], [7.99359, 58.14712], [7.99352, 58.14708]]}, {"navn": "Skippergata", "lengde": 139.4, "retning": 44.7, "coords": [[7.99857, 58.14984], [7.99689, 58.14895]]}, {"navn": "Holbergs gate", "lengde": 73.3, "retning": 133.7, "coords": [[7.9978, 58.1485], [7.99689, 58.14895]]}, {"navn": "Skippergata", "lengde": 128.4, "retning": 224.2, "coords": [[7.99537, 58.14813], [7.99544, 58.14816], [7.99689, 58.14895]]}, {"navn": "Skippergata", "lengde": 98.5, "retning": 221.6, "coords": [[7.99857, 58.14984], [7.99968, 58.15051]]}, {"navn": "Elvegata", "lengde": 76.4, "retning": 127.8, "coords": [[8.00071, 58.15009], [7.99968, 58.15051]]}, {"navn": "Skippergata", "lengde": 56.6, "retning": 41.1, "coords": [[8.00031, 58.15089], [8.00008, 58.15075], [7.99993, 58.15067], [7.99976, 58.15055], [7.99975, 58.15054], [7.99968, 58.15051]]}, {"navn": "Gyldenløves gate", "lengde": 129.9, "retning": 44.1, "coords": [[7.9978, 58.1485], [7.99629, 58.14768], [7.99625, 58.14766]]}, {"navn": "Festningsgata", "lengde": 73.5, "retning": 314.9, "coords": [[7.99625, 58.14766], [7.99585, 58.14786], [7.99551, 58.14804], [7.99537, 58.14813]]}, {"navn": "Festningsgata", "lengde": 87.8, "retning": 136.1, "coords": [[7.99729, 58.14709], [7.99721, 58.14714], [7.99642, 58.14757], [7.99625, 58.14766]]}, {"navn": "Nedre torv", "lengde": 18.5, "retning": 315.2, "coords": [[7.99382, 58.14523], [7.99404, 58.14512]]}, {"navn": "Markens gate", "lengde": 18.5, "retning": 315.2, "coords": [[7.99382, 58.14523], [7.99404, 58.14512]]}, {"navn": "Nedre torv", "lengde": 136.0, "retning": 43.3, "coords": [[7.99563, 58.14601], [7.99404, 58.14512]]}, {"navn": "Fritz Jensens gate", "lengde": 75.4, "retning": 43.2, "coords": [[7.99056, 58.14948], [7.98968, 58.14899]]}, {"navn": "Fritz Jensens gate", "lengde": 50.1, "retning": 225.9, "coords": [[7.98907, 58.14867], [7.98968, 58.14899]]}, {"navn": "Nygata", "lengde": 76.9, "retning": 134.3, "coords": [[7.9915, 58.149], [7.99143, 58.14905], [7.99124, 58.14913], [7.99113, 58.14919], [7.99056, 58.14948]]}, {"navn": "", "lengde": 138.2, "retning": 88.4, "coords": [[7.99231, 58.14951], [7.99227, 58.14955], [7.99182, 58.14978], [7.99167, 58.14985], [7.99158, 58.14988], [7.99149, 58.14989], [7.9914, 58.14988], [7.99127, 58.14986], [7.99056, 58.14948]]}, {"navn": "Fjellgata", "lengde": 52.1, "retning": 315.5, "coords": [[7.98906, 58.14835], [7.98921, 58.14827], [7.9894, 58.14817], [7.98959, 58.14807], [7.98968, 58.14802]]}, {"navn": "Kirkegata", "lengde": 60.6, "retning": 313.6, "coords": [[7.99563, 58.14601], [7.99576, 58.14594], [7.9963, 58.14567], [7.99638, 58.14563]]}, {"navn": "Tollbodgata", "lengde": 143.4, "retning": 43.6, "coords": [[7.99807, 58.14656], [7.99791, 58.14648], [7.99648, 58.14568], [7.99638, 58.14563]]}, {"navn": "Kirkegata", "lengde": 77.0, "retning": 133.2, "coords": [[7.99925, 58.14423], [7.99917, 58.14427], [7.99838, 58.14466], [7.9983, 58.14471]]}, {"navn": "Kongens gate", "lengde": 133.0, "retning": 43.8, "coords": [[7.99986, 58.14557], [7.99971, 58.14549], [7.99935, 58.14529], [7.99888, 58.14503], [7.99837, 58.14475], [7.9983, 58.14471]]}, {"navn": "Kongens gate", "lengde": 139.5, "retning": 223.3, "coords": [[7.99666, 58.14379], [7.99673, 58.14383], [7.99822, 58.14466], [7.9983, 58.14471]]}, {"navn": "Østre Strandgate", "lengde": 130.0, "retning": 42.4, "coords": [[8.00075, 58.1451], [8.00059, 58.14501], [8.00009, 58.14471], [7.99932, 58.14427], [7.99925, 58.14423]]}, {"navn": "Kirkegata", "lengde": 255.0, "retning": 133.2, "coords": [[8.00242, 58.14266], [8.00233, 58.1427], [8.00097, 58.14337], [8.00062, 58.14356], [8.00054, 58.14361], [8.00025, 58.14376], [7.99935, 58.14419], [7.99925, 58.14423]]}, {"navn": "Markens gate", "lengde": 76.4, "retning": 133.6, "coords": [[7.99666, 58.14379], [7.99659, 58.14383], [7.99578, 58.14423], [7.99572, 58.14427]]}, {"navn": "Dronningens gate", "lengde": 143.0, "retning": 224.4, "coords": [[7.99402, 58.14335], [7.99414, 58.14341], [7.9945, 58.14361], [7.99566, 58.14423], [7.99572, 58.14427]]}, {"navn": "Gyldenløves gate", "lengde": 105.6, "retning": 224.0, "coords": [[7.99946, 58.1494], [8.00071, 58.15009]]}, {"navn": "Elvegata", "lengde": 82.5, "retning": 127.5, "coords": [[8.00182, 58.14964], [8.00174, 58.14967], [8.00071, 58.15009]]}, {"navn": "Gyldenløves gate", "lengde": 28.2, "retning": 38.9, "coords": [[8.00101, 58.15028], [8.00091, 58.1502], [8.00079, 58.15014], [8.00078, 58.15013], [8.00071, 58.15009]]}, {"navn": "Gyldenløves gate", "lengde": 140.1, "retning": 224.1, "coords": [[7.9978, 58.1485], [7.99946, 58.1494]]}, {"navn": "Kronprinsens gate", "lengde": 71.8, "retning": 313.1, "coords": [[7.99857, 58.14984], [7.99946, 58.1494]]}, {"navn": "Kronprinsens gate", "lengde": 84.1, "retning": 135.2, "coords": [[8.00047, 58.14887], [8.00039, 58.14891], [7.99946, 58.1494]]}, {"navn": "Holbergs gate", "lengde": 86.2, "retning": 133.1, "coords": [[7.99887, 58.14797], [7.99878, 58.14801], [7.9978, 58.1485]]}, {"navn": "Holbergs gate", "lengde": 75.5, "retning": 133.5, "coords": [[7.9998, 58.1475], [7.99973, 58.14754], [7.99961, 58.14759], [7.99961, 58.1476], [7.99887, 58.14797]]}, {"navn": "Rådhusgata", "lengde": 137.1, "retning": 43.2, "coords": [[8.00047, 58.14887], [8.00039, 58.14882], [7.99899, 58.14804], [7.99887, 58.14797]]}, {"navn": "Rådhusgata", "lengde": 134.6, "retning": 223.5, "coords": [[7.99729, 58.14709], [7.99735, 58.14713], [7.99887, 58.14797]]}, {"navn": "Rådhusgata", "lengde": 116.8, "retning": 42.9, "coords": [[8.00182, 58.14964], [8.00056, 58.14892], [8.00047, 58.14887]]}, {"navn": "Kronprinsens gate", "lengde": 76.3, "retning": 133.7, "coords": [[8.00141, 58.14839], [8.00133, 58.14843], [8.00054, 58.14883], [8.00047, 58.14887]]}, {"navn": "Elvegata", "lengde": 77.2, "retning": 128.9, "coords": [[8.00285, 58.1492], [8.00273, 58.14925], [8.00182, 58.14964]]}, {"navn": "Rådhusgata", "lengde": 105.6, "retning": 326.4, "coords": [[8.00101, 58.15028], [8.002, 58.14988], [8.00204, 58.14985], [8.00205, 58.14983], [8.00188, 58.1497], [8.00187, 58.14968], [8.00182, 58.14964]]}, {"navn": "Tollbodgata", "lengde": 48.7, "retning": 221.0, "coords": [[8.00285, 58.1492], [8.00294, 58.14925], [8.00295, 58.14926], [8.00339, 58.14953]]}, {"navn": "Tollbodgata", "lengde": 123.4, "retning": 223.2, "coords": [[8.00141, 58.14839], [8.00148, 58.14844], [8.00264, 58.14909], [8.00285, 58.1492]]}, {"navn": "Elvegata", "lengde": 78.3, "retning": 127.0, "coords": [[8.00391, 58.14878], [8.00379, 58.1488], [8.00371, 58.14882], [8.00285, 58.1492]]}, {"navn": "Kronprinsens gate", "lengde": 76.6, "retning": 133.9, "coords": [[8.00141, 58.14839], [8.00148, 58.14835], [8.00221, 58.14798], [8.00224, 58.14797], [8.00235, 58.14791]]}, {"navn": "Tollbodgata", "lengde": 136.8, "retning": 223.6, "coords": [[7.9998, 58.1475], [7.99989, 58.14755], [8.00133, 58.14835], [8.00141, 58.14839]]}, {"navn": "Holbergs gate", "lengde": 77.1, "retning": 134.4, "coords": [[8.00074, 58.14702], [8.00062, 58.14708], [7.99987, 58.14747], [7.9998, 58.1475]]}, {"navn": "Tollbodgata", "lengde": 145.7, "retning": 224.3, "coords": [[7.99807, 58.14656], [7.9982, 58.14664], [7.99972, 58.14745], [7.9998, 58.1475]]}, {"navn": "Dronningens gate", "lengde": 137.4, "retning": 43.4, "coords": [[8.00235, 58.14791], [8.00227, 58.14787], [8.00114, 58.14724], [8.00086, 58.14708], [8.00074, 58.14702]]}, {"navn": "Nodeviga", "lengde": 165.6, "retning": 156.3, "coords": [[7.99709, 58.14107], [7.99701, 58.14117], [7.99699, 58.1412], [7.99696, 58.14125], [7.99694, 58.14138], [7.99695, 58.1418], [7.99693, 58.14184], [7.9969, 58.14187], [7.99685, 58.1419], [7.99679, 58.14194], [7.99662, 58.14205], [7.99653, 58.1421], [7.99614, 58.14231], [7.99612, 58.14231], [7.99602, 58.14235]]}, {"navn": "Vestre Strandgate", "lengde": 83.2, "retning": 312.1, "coords": [[7.99497, 58.14286], [7.99513, 58.14278], [7.99547, 58.14261], [7.99581, 58.14244], [7.99602, 58.14235]]}, {"navn": "Gravane", "lengde": 81.5, "retning": 223.8, "coords": [[7.99506, 58.14183], [7.99514, 58.14188], [7.99524, 58.14192], [7.99539, 58.14199], [7.99579, 58.14223], [7.99587, 58.14228], [7.9959, 58.1423], [7.99602, 58.14235]]}, {"navn": "Kongens gate", "lengde": 143.9, "retning": 43.6, "coords": [[7.99666, 58.14379], [7.9966, 58.14376], [7.99508, 58.14292], [7.99497, 58.14286]]}, {"navn": "Vestre Strandgate", "lengde": 78.4, "retning": 314.2, "coords": [[7.99402, 58.14335], [7.99417, 58.14325], [7.99483, 58.14293], [7.99497, 58.14286]]}, {"navn": "Holbergs gate", "lengde": 73.7, "retning": 133.6, "coords": [[8.00258, 58.1461], [8.00247, 58.14615], [8.00175, 58.14651], [8.00167, 58.14655]]}, {"navn": "Kongens gate", "lengde": 136.0, "retning": 44.0, "coords": [[8.00327, 58.14743], [8.0032, 58.14739], [8.00174, 58.14659], [8.00167, 58.14655]]}, {"navn": "Kongens gate", "lengde": 152.3, "retning": 224.0, "coords": [[7.99986, 58.14557], [8.00001, 58.14565], [8.00026, 58.14579], [8.00159, 58.14651], [8.00167, 58.14655]]}, {"navn": "Kongens gate", "lengde": 136.2, "retning": 43.2, "coords": [[8.00486, 58.14833], [8.0048, 58.14829], [8.00335, 58.14748], [8.00327, 58.14743]]}, {"navn": "Kronprinsens gate", "lengde": 75.0, "retning": 134.0, "coords": [[8.00419, 58.14697], [8.00408, 58.14702], [8.00335, 58.14739], [8.00327, 58.14743]]}, {"navn": "Kronprinsens gate", "lengde": 76.1, "retning": 314.4, "coords": [[8.00235, 58.14791], [8.00243, 58.14787], [8.00318, 58.14748], [8.00327, 58.14743]]}, {"navn": "Elvegata", "lengde": 75.6, "retning": 311.8, "coords": [[8.00486, 58.14833], [8.00402, 58.14873], [8.00392, 58.14878], [8.00391, 58.14878]]}, {"navn": "Kongens gate", "lengde": 77.1, "retning": 38.2, "coords": [[8.00486, 58.14833], [8.005, 58.14836], [8.00514, 58.14844], [8.00524, 58.14853], [8.0055, 58.14874], [8.00567, 58.14887]]}, {"navn": "Elvegata", "lengde": 82.9, "retning": 133.5, "coords": [[8.00589, 58.14781], [8.00579, 58.14786], [8.00497, 58.14827], [8.00486, 58.14833]]}, {"navn": "Kongens gate", "lengde": 77.7, "retning": 32.2, "coords": [[8.00555, 58.1489], [8.00542, 58.14881], [8.00534, 58.14876], [8.00501, 58.14855], [8.00485, 58.14843], [8.00486, 58.14833]]}, {"navn": "Østre Strandgate", "lengde": 8.0, "retning": 298.0, "coords": [[8.00555, 58.1489], [8.00567, 58.14887]]}, {"navn": "Østre Strandgate", "lengde": 136.5, "retning": 150.5, "coords": [[8.00648, 58.1481], [8.00668, 58.14825], [8.00691, 58.14854], [8.00567, 58.14887]]}, {"navn": "Østre Strandgate", "lengde": 50.7, "retning": 117.6, "coords": [[8.00555, 58.1489], [8.00478, 58.14911]]}, {"navn": "Østre Strandgate", "lengde": 47.5, "retning": 227.3, "coords": [[8.00589, 58.14781], [8.00599, 58.14787], [8.00648, 58.1481]]}, {"navn": "Østre Strandgate", "lengde": 137.1, "retning": 226.5, "coords": [[8.00419, 58.14697], [8.00431, 58.14702], [8.00575, 58.14775], [8.00589, 58.14781]]}, {"navn": "Holbergs gate", "lengde": 51.2, "retning": 132.3, "coords": [[8.00322, 58.14579], [8.00296, 58.14591], [8.00293, 58.14593], [8.00265, 58.14606], [8.00258, 58.1461]]}, {"navn": "Østre Strandgate", "lengde": 63.8, "retning": 45.2, "coords": [[8.00335, 58.1465], [8.00268, 58.14615], [8.00258, 58.1461]]}, {"navn": "Østre Strandgate", "lengde": 154.8, "retning": 224.0, "coords": [[8.00075, 58.1451], [8.00089, 58.14517], [8.00184, 58.14569], [8.00247, 58.14604], [8.00258, 58.1461]]}, {"navn": "Østre Strandgate", "lengde": 71.6, "retning": 223.9, "coords": [[8.00335, 58.1465], [8.00346, 58.14656], [8.00414, 58.14693], [8.00419, 58.14697]]}, {"navn": "Kronprinsens gate", "lengde": 96.7, "retning": 146.7, "coords": [[8.00499, 58.14633], [8.00509, 58.14641], [8.00515, 58.14645], [8.00505, 58.1465], [8.00432, 58.1469], [8.00419, 58.14697]]}, {"navn": "", "lengde": 243.7, "retning": 38.0, "coords": [[8.00646, 58.1505], [8.00639, 58.15044], [8.00626, 58.15033], [8.00614, 58.15025], [8.00446, 58.14915], [8.00442, 58.14912], [8.00404, 58.14885], [8.00403, 58.14885], [8.00391, 58.14878]]}, {"navn": "Dronningens gate", "lengde": 132.8, "retning": 223.5, "coords": [[8.00235, 58.14791], [8.00248, 58.14799], [8.0037, 58.14867], [8.00391, 58.14878]]}, {"navn": "Tordenskjolds gate", "lengde": 188.6, "retning": 44.2, "coords": [[7.99633, 58.15162], [7.9959, 58.15139], [7.99562, 58.15123], [7.99486, 58.15082], [7.99475, 58.15076], [7.99409, 58.15041]]}, {"navn": "Tordenskjolds gate", "lengde": 23.9, "retning": 225.8, "coords": [[7.99379, 58.15025], [7.99394, 58.15033], [7.99409, 58.15041]]}, {"navn": "Østre Strandgate", "lengde": 81.4, "retning": 314.5, "coords": [[8.00335, 58.1465], [8.00343, 58.14646], [8.00434, 58.14599]]}, {"navn": "Kronprinsens gate", "lengde": 70.2, "retning": 311.9, "coords": [[7.99767, 58.15027], [7.99857, 58.14984]]}, {"navn": "Kronprinsens gate", "lengde": 83.9, "retning": 310.6, "coords": [[7.99659, 58.15076], [7.99691, 58.15061], [7.99731, 58.15043], [7.99767, 58.15027]]}, {"navn": "Kronprinsens gate", "lengde": 71.1, "retning": 312.7, "coords": [[7.9957, 58.15119], [7.99659, 58.15076]]}, {"navn": "Kristian IVs gate", "lengde": 88.7, "retning": 43.6, "coords": [[7.99763, 58.15133], [7.99688, 58.15092], [7.99659, 58.15076]]}, {"navn": "Festningsgata", "lengde": 73.8, "retning": 315.5, "coords": [[7.99986, 58.14557], [7.99994, 58.14553], [8.00017, 58.1454], [8.00063, 58.14516], [8.00075, 58.1451]]}, {"navn": "Festningsgata", "lengde": 13.1, "retning": 138.2, "coords": [[8.00089, 58.14501], [8.00082, 58.14505], [8.00075, 58.1451]]}, {"navn": "Festningsgata", "lengde": 159.8, "retning": 133.8, "coords": [[7.99611, 58.14755], [7.9968, 58.14719], [7.9971, 58.14702], [7.99789, 58.1466], [7.99807, 58.14656]]}, {"navn": "Festningsgata", "lengde": 74.9, "retning": 318.5, "coords": [[7.99527, 58.14805], [7.9954, 58.14798], [7.99566, 58.1478], [7.99611, 58.14755]]}, {"navn": "Skippergata", "lengde": 9.8, "retning": 217.2, "coords": [[7.99527, 58.14805], [7.99537, 58.14813]]}, {"navn": "Festningsgata", "lengde": 72.4, "retning": 316.0, "coords": [[7.99537, 58.14813], [7.99525, 58.14819], [7.99451, 58.14859]]}, {"navn": "Stener Heyerdahls gate", "lengde": 74.3, "retning": 137.8, "coords": [[7.99263, 58.14961], [7.9925, 58.14969], [7.99189, 58.15003], [7.99178, 58.15011]]}, {"navn": "Lømslands vei", "lengde": 21.9, "retning": 315.3, "coords": [[7.99261, 58.15087], [7.99287, 58.15073]]}, {"navn": "Lømslands vei", "lengde": 70.0, "retning": 222.9, "coords": [[7.99206, 58.15027], [7.99215, 58.15033], [7.99287, 58.15073]]}, {"navn": "Lømslands vei", "lengde": 76.1, "retning": 134.4, "coords": [[7.99379, 58.15025], [7.9937, 58.15031], [7.99294, 58.1507], [7.99287, 58.15073]]}, {"navn": "Lømslands vei", "lengde": 73.3, "retning": 346.1, "coords": [[7.99232, 58.15149], [7.99227, 58.15137], [7.99227, 58.15128], [7.99228, 58.15122], [7.99231, 58.15115], [7.99238, 58.15109], [7.99261, 58.15087]]}, {"navn": "Lømslands vei", "lengde": 49.2, "retning": 234.3, "coords": [[7.99194, 58.15062], [7.9921, 58.15063], [7.99223, 58.15068], [7.99261, 58.15087]]}, {"navn": "Tordenskjolds gate", "lengde": 98.5, "retning": 223.8, "coords": [[7.99263, 58.14961], [7.99273, 58.14967], [7.99379, 58.15025]]}, {"navn": "Festningsgata", "lengde": 79.4, "retning": 135.7, "coords": [[7.99358, 58.1491], [7.99277, 58.14954], [7.99263, 58.14961]]}, {"navn": "Festningsgata", "lengde": 78.9, "retning": 136.0, "coords": [[7.99451, 58.14859], [7.99437, 58.14867], [7.99389, 58.14893], [7.99358, 58.1491]]}, {"navn": "Festningsgata", "lengde": 74.3, "retning": 322.2, "coords": [[7.99807, 58.14656], [7.99798, 58.14665], [7.99729, 58.14709]]}, {"navn": "Gravane", "lengde": 62.2, "retning": 192.3, "coords": [[7.99462, 58.14105], [7.99484, 58.1416]]}, {"navn": "Gravane", "lengde": 28.6, "retning": 26.8, "coords": [[7.99506, 58.14183], [7.995, 58.14178], [7.99495, 58.14172], [7.99484, 58.1416]]}, {"navn": "Fiskebrygga", "lengde": 56.5, "retning": 119.7, "coords": [[7.99567, 58.14135], [7.99548, 58.14138], [7.99507, 58.14153], [7.99493, 58.14158], [7.99484, 58.1416]]}, {"navn": "Lømslands vei", "lengde": 16.7, "retning": 238.5, "coords": [[7.99298, 58.15181], [7.99322, 58.15189]]}, {"navn": "Lømslands vei", "lengde": 75.2, "retning": 238.5, "coords": [[7.99298, 58.15181], [7.99283, 58.1519], [7.99277, 58.15197], [7.99306, 58.15206], [7.9932, 58.15205], [7.99326, 58.15204], [7.99331, 58.15201], [7.99334, 58.15198], [7.99332, 58.15193], [7.99322, 58.15189]]}, {"navn": "", "lengde": 302.7, "retning": 268.6, "coords": [[7.98545, 58.14863], [7.98579, 58.1483], [7.986, 58.14809], [7.98617, 58.14794], [7.98619, 58.14793], [7.98622, 58.14792], [7.98625, 58.14793], [7.98629, 58.14794], [7.98664, 58.14803], [7.98676, 58.14808], [7.98751, 58.14829], [7.98775, 58.14837], [7.98785, 58.14841], [7.98799, 58.14847], [7.98814, 58.14855], [7.98827, 58.14864], [7.98837, 58.14874], [7.9884, 58.14878], [7.98843, 58.14881], [7.98853, 58.14884], [7.98863, 58.14884], [7.9887, 58.14883], [7.98882, 58.14879], [7.98907, 58.14867]]}, {"navn": "Fjellgata", "lengde": 19.8, "retning": 221.4, "coords": [[7.98885, 58.14854], [7.98891, 58.14858], [7.98907, 58.14867]]}, {"navn": "Vestre Strandgate", "lengde": 43.3, "retning": 42.6, "coords": [[7.9887, 58.14547], [7.98908, 58.14561], [7.98916, 58.14567], [7.98917, 58.14574]]}, {"navn": "Vestre Strandgate", "lengde": 43.3, "retning": 42.6, "coords": [[7.98917, 58.14574], [7.98907, 58.14573], [7.989, 58.1457], [7.98876, 58.14555], [7.9887, 58.14547]]}, {"navn": "Vestre Strandgate", "lengde": 86.9, "retning": 185.6, "coords": [[7.98858, 58.14479], [7.98868, 58.14484], [7.98871, 58.14486], [7.98878, 58.14491], [7.98881, 58.14494], [7.98885, 58.145], [7.98892, 58.14512], [7.98894, 58.14516], [7.98893, 58.14519], [7.98892, 58.14522], [7.98889, 58.14525], [7.98884, 58.14527], [7.98872, 58.14536], [7.98868, 58.1454], [7.98868, 58.14543], [7.9887, 58.14547]]}, {"navn": "Nedre torv", "lengde": 4.5, "retning": 133.8, "coords": [[7.99379, 58.14525], [7.99374, 58.14528]]}, {"navn": "Markens gate", "lengde": 4.5, "retning": 133.8, "coords": [[7.99379, 58.14525], [7.99374, 58.14528]]}, {"navn": "Markens gate", "lengde": 72.4, "retning": 313.1, "coords": [[7.99284, 58.14572], [7.99374, 58.14528]]}, {"navn": "Nedre torv", "lengde": 137.1, "retning": 43.7, "coords": [[7.99535, 58.14617], [7.99502, 58.14598], [7.99451, 58.1457], [7.99445, 58.14567], [7.99374, 58.14528]]}, {"navn": "Vestre Strandgate", "lengde": 77.2, "retning": 134.5, "coords": [[7.98917, 58.14574], [7.98937, 58.14562], [7.98964, 58.14549], [7.99011, 58.14525]]}, {"navn": "Vestre Strandgate", "lengde": 186.4, "retning": 312.7, "coords": [[7.98685, 58.14687], [7.98696, 58.14685], [7.98707, 58.14681], [7.98728, 58.14671], [7.98772, 58.1465], [7.98827, 58.14622], [7.98901, 58.14584], [7.98917, 58.14574]]}, {"navn": "Tollbodgata", "lengde": 7.8, "retning": 32.6, "coords": [[7.99316, 58.14382], [7.99309, 58.14376]]}, {"navn": "Tollbodgata", "lengde": 59.6, "retning": 228.8, "coords": [[7.99309, 58.14376], [7.99294, 58.14372], [7.99246, 58.14351], [7.99234, 58.14341]]}, {"navn": "Tollbodgata", "lengde": 61.2, "retning": 228.8, "coords": [[7.99234, 58.14341], [7.99252, 58.14344], [7.99303, 58.14367], [7.99309, 58.14376]]}, {"navn": "Vestre Strandgate", "lengde": 71.5, "retning": 130.3, "coords": [[7.99309, 58.14376], [7.99324, 58.14369], [7.99382, 58.1434], [7.99402, 58.14335]]}, {"navn": "Vestre Strandgate", "lengde": 85.0, "retning": 313.1, "coords": [[7.99204, 58.14428], [7.99216, 58.14422], [7.99291, 58.14385], [7.99309, 58.14376]]}, {"navn": "Vestre Strandgate", "lengde": 73.2, "retning": 313.1, "coords": [[7.99113, 58.14473], [7.99156, 58.1445], [7.99189, 58.14435], [7.99204, 58.14428]]}, {"navn": "", "lengde": 117.6, "retning": 169.6, "coords": [[7.99234, 58.14341], [7.9922, 58.14355], [7.99217, 58.14358], [7.99167, 58.14401], [7.99165, 58.14403], [7.99165, 58.14407], [7.99167, 58.14411], [7.99174, 58.14414], [7.99196, 58.14425], [7.99204, 58.14428]]}, {"navn": "", "lengde": 57.3, "retning": 267.9, "coords": [[7.9903, 58.14472], [7.99059, 58.14463], [7.99071, 58.14461], [7.9908, 58.1446], [7.99089, 58.14461], [7.99097, 58.14464], [7.99106, 58.14469], [7.99113, 58.14473]]}, {"navn": "Vestre Strandgate", "lengde": 83.1, "retning": 314.2, "coords": [[7.99011, 58.14525], [7.99024, 58.14518], [7.99099, 58.14481], [7.99113, 58.14473]]}, {"navn": "Vestre Strandgate", "lengde": 72.8, "retning": 316.4, "coords": [[7.99402, 58.14335], [7.9939, 58.14344], [7.99332, 58.14374], [7.99316, 58.14382]]}, {"navn": "Fiskebrygga", "lengde": 36.5, "retning": 276.8, "coords": [[7.99556, 58.14112], [7.99608, 58.14107], [7.99613, 58.14109], [7.99616, 58.14108]]}, {"navn": "Fiskebrygga", "lengde": 55.1, "retning": 166.5, "coords": [[7.99573, 58.14076], [7.99554, 58.14079], [7.99557, 58.14087], [7.9955, 58.14092], [7.99543, 58.14094], [7.99547, 58.14107], [7.99556, 58.14112]]}, {"navn": "Fiskebrygga", "lengde": 26.2, "retning": 14.4, "coords": [[7.99567, 58.14135], [7.99566, 58.14127], [7.99556, 58.14112]]}, {"navn": "Fiskebrygga", "lengde": 29.0, "retning": 239.3, "coords": [[7.99515, 58.14099], [7.99524, 58.14105], [7.99556, 58.14112]]}, {"navn": "Fiskebrygga", "lengde": 30.8, "retning": 190.0, "coords": [[7.99506, 58.14072], [7.99515, 58.14099]]}, {"navn": "Fiskebrygga", "lengde": 32.0, "retning": 282.0, "coords": [[7.99462, 58.14105], [7.99515, 58.14099]]}, {"navn": "Nedre torv", "lengde": 5.7, "retning": 137.4, "coords": [[7.99542, 58.14613], [7.99535, 58.14617]]}, {"navn": "Kirkegata", "lengde": 5.7, "retning": 137.4, "coords": [[7.99542, 58.14613], [7.99535, 58.14617]]}, {"navn": "Rådhusgata", "lengde": 143.3, "retning": 47.2, "coords": [[7.99704, 58.14699], [7.99698, 58.14696], [7.99668, 58.14679], [7.99594, 58.14639], [7.99585, 58.14644], [7.99535, 58.14617]]}, {"navn": "Fiskebrygga", "lengde": 70.6, "retning": 146.1, "coords": [[7.99567, 58.14135], [7.9957, 58.14143], [7.99572, 58.14147], [7.99571, 58.14152], [7.99567, 58.14155], [7.99558, 58.1416], [7.99534, 58.1417], [7.99514, 58.1418], [7.99506, 58.14183]]}, {"navn": "Lømslands vei", "lengde": 52.8, "retning": 47.0, "coords": [[7.99298, 58.15181], [7.9929, 58.15176], [7.99232, 58.15149]]}, {"navn": "Lømslands vei", "lengde": 34.7, "retning": 225.9, "coords": [[7.99189, 58.15127], [7.99197, 58.15131], [7.99232, 58.15149]]}, {"navn": "Tresse", "lengde": 317.2, "retning": NaN, "coords": [[8.00089, 58.14501], [8.00095, 58.14504], [8.00097, 58.14503], [8.00113, 58.14494], [8.00139, 58.14508], [8.00145, 58.14512], [8.00171, 58.14499], [8.0021, 58.14478], [8.00213, 58.14477], [8.0022, 58.14475], [8.00245, 58.14462], [8.00231, 58.14455], [8.00169, 58.14421], [8.00142, 58.14435], [8.00134, 58.14439], [8.00072, 58.14471], [8.00102, 58.14487], [8.00083, 58.14497], [8.00089, 58.14501]]}, {"navn": "Havnegata", "lengde": 14.4, "retning": 117.5, "coords": [[7.99149, 58.14408], [7.99144, 58.1441], [7.99127, 58.14414]]}, {"navn": "Fjellgata", "lengde": 26.4, "retning": 149.4, "coords": [[7.98906, 58.14835], [7.98887, 58.14845], [7.98882, 58.14849], [7.98885, 58.14854]]}, {"navn": "Kristian IVs gate", "lengde": 71.7, "retning": 43.3, "coords": [[7.99847, 58.1518], [7.99771, 58.15138], [7.99769, 58.15137], [7.99763, 58.15133]]}, {"navn": "Vestre Strandgate", "lengde": 31.3, "retning": 329.7, "coords": [[7.98738, 58.14676], [7.9873, 58.14681], [7.98724, 58.14685], [7.98718, 58.1469], [7.98715, 58.14694], [7.98711, 58.147]]}, {"navn": "Havnegata", "lengde": 90.2, "retning": 326.2, "coords": [[7.99149, 58.14408], [7.99215, 58.14351], [7.99234, 58.14341]]}, {"navn": "Markens gate", "lengde": 77.7, "retning": 313.1, "coords": [[7.99187, 58.1462], [7.99195, 58.14616], [7.99284, 58.14572]]}, {"navn": "Nedre torv", "lengde": 2.3, "retning": 313.7, "coords": [[7.99379, 58.14525], [7.99382, 58.14523]]}, {"navn": "Markens gate", "lengde": 2.3, "retning": 313.7, "coords": [[7.99379, 58.14525], [7.99382, 58.14523]]}, {"navn": "Nedre torv", "lengde": 18.7, "retning": 317.4, "coords": [[7.99542, 58.14613], [7.99563, 58.14601]]}, {"navn": "Kirkegata", "lengde": 18.7, "retning": 317.4, "coords": [[7.99542, 58.14613], [7.99563, 58.14601]]}, {"navn": "Gyldenløves gate", "lengde": 23.3, "retning": 217.8, "coords": [[8.00101, 58.15028], [8.00111, 58.15035], [8.00125, 58.15045]]}, {"navn": "Fiskebrygga", "lengde": 12.2, "retning": 191.9, "coords": [[7.99569, 58.14065], [7.99573, 58.14076]]}, {"navn": "Rådhusgata", "lengde": 136.7, "retning": 224.2, "coords": [[7.99379, 58.14525], [7.99542, 58.14613]]}];</script>
+<script>// Forutsetter globale: SunCalc (suncalc.js) og GATER (data fra OSM, se hent_data.py)
+const LAT = 58.14615, LON = 7.9959, AAR = 2026;
+const SLOT = 5; // minutter per steg i simuleringen
+const HENGE_TOL = 1.5; // grader: hvor nøyaktig sola må følge gata for en «henge»
+const HENGE_H = 1; // grader: maks solhøyde for en «henge» (sola nede ved horisonten)
+const TOLERANSE = 8; // grader: hvor nær solretningen en gate må ligge for å regnes som «i sol»
+const NSLOT = 1440 / SLOT;
+const RAD = Math.PI / 180;
+const $ = (id) => document.getElementById(id);
+
+// ---------- Språk: styres av <html lang> (nb eller en) ----------
+const LANG = document.documentElement.lang === "en" ? "en" : "nb";
+const TXT = {
+  nb: {
+    loc: "nb-NO", months: ["jan", "feb", "mar", "apr", "mai", "jun", "jul", "aug", "sep", "okt", "nov", "des"],
+    dirs: ["nord", "nordøst", "øst", "sørøst", "sør", "sørvest", "vest", "nordvest"], cardinals: ["N", "Ø", "S", "V"],
+    night: "Sola er under horisonten", play: "▶ Spill av dagen", stop: "⏸ Stopp",
+    streets: (a, b) => `${a}–${b}-gatene`, tip: (akse) => `Sola langs ${akse}°-gatene`,
+    today: "i dag", onDate: (d) => "den " + d,
+    look: (nar, del) => `☀️ For å se lyset ${nar} bør du kikke langs gatene ${del.join(" og ")}.`,
+    peak: (t, dir, h, st) => `kl. <b>${t}</b> fra <b>${dir}</b> (${h}° over horisonten, langs <span style="color:${st.c}">${st.txt}</span>)`,
+    none: (nar) => `${nar[0].toUpperCase() + nar.slice(1)} står ikke sola langs noen av hovedgatene.`,
+    th: ["Datoer", "Kl.", "Hva"], days: (n) => `${n} dager`,
+    rise: (d) => `Soloppgang i ${d}`, set: (d) => `Solnedgang i ${d}`, along: (st) => `langs ${st}`,
+    hengeNote: (tol, h) => `Perioder der sola står rett langs en hovedgate (±${tol}°) mens den er nede ved horisonten (under ${h}°). Forutsetter flat horisont; bygninger og terreng kan flytte datoene noen dager. Klikk på en rad for å se øyeblikket.`,
+    entropi: (e) => `Lengdevektet orientasjonsentropi: ${e} (skala: 1,39 = perfekt rutenett, 3,58 = helt uordnet). Gult felt = gater solen peker langs akkurat nå.`,
+  },
+  en: {
+    loc: "en-GB", months: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+    dirs: ["north", "northeast", "east", "southeast", "south", "southwest", "west", "northwest"], cardinals: ["N", "E", "S", "W"],
+    night: "The sun is below the horizon", play: "▶ Play the day", stop: "⏸ Stop",
+    streets: (a, b) => `${a}–${b} streets`, tip: (akse) => `Sun aligned with the ${akse}° streets`,
+    today: "today", onDate: (d) => "on " + d,
+    look: (nar, del) => `☀️ To see the light ${nar}, look along the streets ${del.join(" and ")}.`,
+    peak: (t, dir, h, st) => `at <b>${t}</b> from the <b>${dir}</b> (${h}° above the horizon, along the <span style="color:${st.c}">${st.txt}</span>)`,
+    none: (nar) => `${nar[0].toUpperCase() + nar.slice(1)} the sun does not line up with any of the main streets.`,
+    th: ["Dates", "Time", "What"], days: (n) => `${n} days`,
+    rise: (d) => `Sunrise in the ${d}`, set: (d) => `Sunset in the ${d}`, along: (st) => `along the ${st}`,
+    hengeNote: (tol, h) => `Periods when the sun points straight along a main street (±${tol}°) while it is low on the horizon (below ${h}°). Assumes a flat horizon; buildings and terrain can shift the dates by a few days. Click a row to see the moment.`,
+    entropi: (e) => `Length-weighted orientation entropy: ${e} (scale: 1.39 = perfect grid, 3.58 = completely disordered). Yellow streets = streets the sun is pointing along right now.`,
+  },
+}[LANG];
+
+// ---------- Geometri: del gatene i små segmenter med lengde og retning (akse 0-180°) ----------
+const mPerLat = 111320, mPerLon = 111320 * Math.cos(LAT * RAD);
+const segmenter = [];
+for (const g of GATER) {
+  for (let i = 1; i < g.coords.length; i++) {
+    const dx = (g.coords[i][0] - g.coords[i - 1][0]) * mPerLon;
+    const dy = (g.coords[i][1] - g.coords[i - 1][1]) * mPerLat;
+    const len = Math.hypot(dx, dy);
+    if (len < 0.5) continue;
+    const brg = ((Math.atan2(dx, dy) / RAD) + 360) % 180; // kompass, brettet til akse
+    segmenter.push({ len, brg, g, i });
+  }
+}
+const totalLen = segmenter.reduce((s, x) => s + x.len, 0);
+
+// Lengde per 1°-bin (180 stk) av gateakser
+const bin = new Float64Array(180);
+for (const s of segmenter) bin[Math.floor(s.brg) % 180] += s.len;
+
+/** Andel av gatelengden hvis akse ligger innen ±tol grader av azimut (kompass) */
+function andel(azimut, tol) {
+  const c = Math.floor(((azimut % 180) + 180) % 180);
+  let sum = 0;
+  for (let k = -tol; k <= tol; k++) sum += bin[(c + k + 360) % 180];
+  return sum / totalLen;
+}
+function vinkelDiff(a, b) { // forskjell mellom to akser, 0-90
+  const d = Math.abs(((a - b) % 180 + 180) % 180);
+  return Math.min(d, 180 - d);
+}
+
+// To dominante akser (peaks i den lengdevektede retningsfordelingen)
+function dominanteAkser() {
+  const glatt = (c, w = 6) => { let s = 0; for (let k = -w; k <= w; k++) s += bin[(c + k + 180) % 180]; return s; };
+  let a = 0;
+  for (let c = 0; c < 180; c++) if (glatt(c) > glatt(a)) a = c;
+  let b = -1;
+  for (let c = 0; c < 180; c++) if (vinkelDiff(c, a) > 30 && (b < 0 || glatt(c) > glatt(b))) b = c;
+  return [a, b];
+}
+const [AKSE_A, AKSE_B] = dominanteAkser();
+
+// Orientasjonsentropi som i osmnx (36 bin à 10°, over begge retninger av hver gate)
+function entropi() {
+  const h = new Float64Array(36), n = 36;
+  for (const s of segmenter) {
+    // osmnx teller begge retninger; bins er sentrert rundt 0, 10, 20 ...
+    for (const b of [s.brg, (s.brg + 180) % 360]) h[Math.floor(((b + 5) % 360) / 10)] += s.len;
+  }
+  const sum = h.reduce((a, b) => a + b, 0);
+  return -Array.from(h).filter((x) => x > 0).reduce((a, x) => a + (x / sum) * Math.log(x / sum), 0);
+}
+
+// ---------- Sol: SunCalc, norsk lokaltid ----------
+const osloFmt = new Intl.DateTimeFormat("en-US", { timeZone: "Europe/Oslo", hour12: false, year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric", second: "numeric" });
+function osloOffsetMs(utcMs) {
+  const p = Object.fromEntries(osloFmt.formatToParts(new Date(utcMs)).map((x) => [x.type, x.value]));
+  const asUtc = Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour % 24, +p.minute, +p.second);
+  return asUtc - Math.floor(utcMs / 1000) * 1000;
+}
+const offsetPerDag = [null]; // dag 1..365
+for (let d = 1; d <= 365; d++) offsetPerDag.push(osloOffsetMs(Date.UTC(AAR, 0, d, 12)));
+
+function sol(dag, minutt) {
+  const ms = Date.UTC(AAR, 0, dag, 0, minutt) - offsetPerDag[dag];
+  const p = SunCalc.getPosition(new Date(ms), LAT, LON);
+  return { az: (p.azimuth / RAD + 180 + 360) % 360, h: p.altitude / RAD }; // SunCalc: azimut fra sør, mot vest
+}
+function datoFraDag(dag) { return new Date(Date.UTC(AAR, 0, dag)); }
+function fmtDato(dag) { return datoFraDag(dag).toLocaleDateString(TXT.loc, { day: "numeric", month: "long", timeZone: "UTC" }); }
+function fmtTid(m) { return String(Math.floor(m / 60)).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0"); }
+
+// ---------- Simulering: hele året, hvert 5. minutt ----------
+const sim = { az: new Float32Array(365 * NSLOT), h: new Float32Array(365 * NSLOT) };
+for (let d = 1; d <= 365; d++) for (let k = 0; k < NSLOT; k++) {
+  const s = sol(d, k * SLOT);
+  sim.az[(d - 1) * NSLOT + k] = s.az; sim.h[(d - 1) * NSLOT + k] = s.h;
+}
+function simAndel(tol) {
+  const out = new Float32Array(365 * NSLOT);
+  const cache = new Float32Array(180).map((_, c) => andel(c, tol));
+  for (let i = 0; i < out.length; i++) {
+    if (sim.h[i] <= 0) { out[i] = -1; continue; }
+    out[i] = cache[Math.round(sim.az[i] % 180) % 180];
+  }
+  return out;
+}
+let andelGrid = simAndel(8);
+
+/** Beste tidspunkt per dag og hele året */
+function funn(tol) {
+  const per = [];
+  for (let d = 1; d <= 365; d++) {
+    let best = -1, bk = 0;
+    for (let k = 0; k < NSLOT; k++) { const v = andelGrid[(d - 1) * NSLOT + k]; if (v > best) { best = v; bk = k; } }
+    per.push({ dag: d, v: best, min: bk * SLOT });
+  }
+  return per;
+}
+
+// ---------- Tegning ----------
+const kart = $("kart"), kc = kart.getContext("2d");
+/** Tilpass canvas til CSS-størrelsen (skarpt på retina) og returner CSS-piksler. Tegning skjer i CSS-piksler. */
+function klargjor(cv, ctx) {
+  const dpr = window.devicePixelRatio || 1, W = cv.clientWidth, H = cv.clientHeight;
+  if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return [W, H];
+}
+const smal = () => window.matchMedia("(max-width:600px)").matches;
+const bounds = (() => {
+  let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+  for (const g of GATER) for (const [lo, la] of g.coords) { x0 = Math.min(x0, lo); x1 = Math.max(x1, lo); y0 = Math.min(y0, la); y1 = Math.max(y1, la); }
+  return { x0, x1, y0, y1 };
+})();
+function proj(lo, la, W, H, pad = smal() ? 22 : 40) {
+  const w = (bounds.x1 - bounds.x0) * mPerLon, h = (bounds.y1 - bounds.y0) * mPerLat;
+  const sc = Math.min((W - 2 * pad) / w, (H - 2 * pad) / h);
+  return [W / 2 + ((lo - (bounds.x0 + bounds.x1) / 2) * mPerLon) * sc, H / 2 - ((la - (bounds.y0 + bounds.y1) / 2) * mPerLat) * sc];
+}
+function mixFarge(t) { // 0 = mørk blågrå, 1 = gul
+  const a = [52, 70, 92], b = [255, 196, 40];
+  return `rgb(${a.map((x, i) => Math.round(x + (b[i] - x) * t)).join(",")})`;
+}
+
+function tegnKart(s, tol) {
+  const [W, H] = klargjor(kart, kc);
+  kc.clearRect(0, 0, W, H);
+  const oppe = s.h > 0;
+  // gater
+  kc.lineCap = "round";
+  for (const g of GATER) {
+    for (let i = 1; i < g.coords.length; i++) {
+      const dx = (g.coords[i][0] - g.coords[i - 1][0]) * mPerLon, dy = (g.coords[i][1] - g.coords[i - 1][1]) * mPerLat;
+      const brg = ((Math.atan2(dx, dy) / RAD) + 360) % 180;
+      const d = vinkelDiff(brg, s.az);
+      const t = oppe ? Math.max(0, 1 - d / 45) ** 2 : 0;
+      const treff = oppe && d <= tol;
+      const [x1, y1] = proj(g.coords[i - 1][0], g.coords[i - 1][1], W, H), [x2, y2] = proj(g.coords[i][0], g.coords[i][1], W, H);
+      kc.strokeStyle = mixFarge(t); kc.lineWidth = treff ? 5 : 3;
+      if (treff) { kc.shadowColor = "rgba(255,176,0,.8)"; kc.shadowBlur = 12; } else kc.shadowBlur = 0;
+      kc.beginPath(); kc.moveTo(x1, y1); kc.lineTo(x2, y2); kc.stroke();
+    }
+  }
+  kc.shadowBlur = 0;
+  // sol-pil fra kanten av kartet (sola kommer fra azimut-retningen)
+  if (oppe) {
+    const cx = W / 2, cy = H / 2, ux = Math.sin(s.az * RAD), uy = -Math.cos(s.az * RAD);
+    const R = Math.min(W, H) / 2 - 14;
+    kc.strokeStyle = "rgba(255,176,0,.35)"; kc.lineWidth = 1.5; kc.setLineDash([6, 6]);
+    kc.beginPath(); kc.moveTo(cx - ux * R, cy - uy * R); kc.lineTo(cx + ux * R, cy + uy * R); kc.stroke(); kc.setLineDash([]);
+    const sx = cx + ux * R, sy = cy + uy * R;
+    kc.fillStyle = "#ffb000"; kc.shadowColor = "#ffb000"; kc.shadowBlur = 24;
+    kc.beginPath(); kc.arc(sx, sy, 11, 0, 7); kc.fill(); kc.shadowBlur = 0;
+    kc.strokeStyle = "#ffb000"; kc.lineWidth = 2;
+    for (let a = 0; a < 8; a++) { const r = a * Math.PI / 4; kc.beginPath(); kc.moveTo(sx + Math.cos(r) * 16, sy + Math.sin(r) * 16); kc.lineTo(sx + Math.cos(r) * 22, sy + Math.sin(r) * 22); kc.stroke(); }
+  } else {
+    kc.fillStyle = "rgba(15,23,32,.55)"; kc.fillRect(0, 0, W, H);
+    kc.fillStyle = "#8b9bab"; kc.font = "20px system-ui"; kc.textAlign = "center"; kc.fillText(TXT.night, W / 2, 34);
+  }
+  // nordpil
+  kc.fillStyle = "#8b9bab"; kc.font = "bold 16px system-ui"; kc.textAlign = "center";
+  kc.fillText("N ↑", W - 34, 30);
+}
+
+const pol = $("polar"), pc = pol.getContext("2d");
+function tegnPolar(s, tol) {
+  const [W] = klargjor(pol, pc), c = W / 2, R = c - 40;
+  pc.clearRect(0, 0, W, W);
+  pc.strokeStyle = "#2a3846"; pc.fillStyle = "#8b9bab"; pc.font = "14px system-ui"; pc.textAlign = "center"; pc.textBaseline = "middle"; pc.lineWidth = 1;
+  for (const f of [0.5, 1]) { pc.beginPath(); pc.arc(c, c, R * f, 0, 7); pc.stroke(); }
+  for (const [t, a] of TXT.cardinals.map((t, i) => [t, i * 90])) pc.fillText(t, c + Math.sin(a * RAD) * (R + 20), c - Math.cos(a * RAD) * (R + 20));
+  // histogram, 5°-bins, speilet (begge retninger)
+  const B = 72, h = new Float64Array(B);
+  for (const x of segmenter) { h[Math.floor(x.brg / 5) % B] += x.len; h[Math.floor(((x.brg + 180) % 360) / 5) % B] += x.len; }
+  const mx = Math.max(...h);
+  for (let i = 0; i < B; i++) {
+    const a0 = (i * 5) * RAD, a1 = (i * 5 + 5) * RAD, r = R * Math.sqrt(h[i] / mx);
+    // bin dekker aksen [i*5, i*5+5]; treff hvis sola er innen toleransen
+    const mid = i * 5 + 2.5, treff = s.h > 0 && vinkelDiff(mid, s.az) <= tol;
+    pc.fillStyle = treff ? "#ffb000" : "#4f7399";
+    pc.beginPath(); pc.moveTo(c, c); pc.arc(c, c, r, a0 - Math.PI / 2, a1 - Math.PI / 2); pc.closePath(); pc.fill();
+  }
+  if (s.h > 0) {
+    for (const az of [s.az, s.az + 180]) {
+      pc.strokeStyle = "#ffb000"; pc.lineWidth = 2; pc.beginPath(); pc.moveTo(c, c); pc.lineTo(c + Math.sin(az * RAD) * R * 1.05, c - Math.cos(az * RAD) * R * 1.05); pc.stroke();
+    }
+    pc.fillStyle = "#ffb000"; pc.beginPath(); pc.arc(c + Math.sin(s.az * RAD) * R * 1.05, c - Math.cos(s.az * RAD) * R * 1.05, 6, 0, 7); pc.fill();
+  }
+}
+
+const vc = $("varme"), vx = vc.getContext("2d");
+const VW = 365, VH = NSLOT;
+const img = document.createElement("canvas"); img.width = VW; img.height = VH;
+function lagVarme() {
+  const ic = img.getContext("2d"), id = ic.createImageData(VW, VH);
+  const mx = Math.max(...andelGrid);
+  for (let d = 0; d < 365; d++) for (let k = 0; k < NSLOT; k++) {
+    const v = andelGrid[d * NSLOT + k], o = (k * VW + d) * 4;
+    let rgb;
+    if (v < 0) rgb = [15, 23, 32];
+    else { const t = Math.min(1, v / Math.max(mx, 1e-9)); rgb = viridisLik(t); }
+    id.data[o] = rgb[0]; id.data[o + 1] = rgb[1]; id.data[o + 2] = rgb[2]; id.data[o + 3] = 255;
+  }
+  ic.putImageData(id, 0, 0);
+}
+function viridisLik(t) { // enkel Viridis-interpolasjon
+  const st = [[68, 1, 84], [59, 82, 139], [33, 145, 140], [94, 201, 98], [253, 231, 37]];
+  const x = t * (st.length - 1), i = Math.min(st.length - 2, Math.floor(x)), f = x - i;
+  return st[i].map((v, j) => Math.round(v + (st[i + 1][j] - v) * f));
+}
+const M = { l: 48, r: 10, t: 8, b: 26 };
+function tegnVarme(dag, min) {
+  const [W, H] = klargjor(vc, vx);
+  M.l = smal() ? 36 : 48; M.r = smal() ? 6 : 10;
+  const pw = W - M.l - M.r, ph = H - M.t - M.b;
+  vx.clearRect(0, 0, W, H);
+  vx.imageSmoothingEnabled = false;
+  vx.drawImage(img, M.l, M.t, pw, ph);
+  vx.fillStyle = "#8b9bab"; vx.font = (smal() ? 10 : 12) + "px system-ui"; vx.textAlign = "right"; vx.textBaseline = "middle";
+  for (let h = 0; h <= 24; h += 4) { const y = M.t + ph * h / 24; vx.fillText(String(h).padStart(2, "0") + ":00", M.l - 6, y); vx.strokeStyle = "rgba(255,255,255,.08)"; vx.beginPath(); vx.moveTo(M.l, y); vx.lineTo(W - M.r, y); vx.stroke(); }
+  vx.textAlign = "center"; vx.textBaseline = "top";
+  for (let m = 0; m < 12; m++) { const d = Math.floor((Date.UTC(AAR, m, 1) - Date.UTC(AAR, 0, 1)) / 864e5); vx.fillText(TXT.months[m], M.l + pw * (d + 15) / 365, H - M.b + 6); }
+  // markør
+  const x = M.l + pw * (dag - 0.5) / 365, y = M.t + ph * min / 1440;
+  vx.strokeStyle = "#fff"; vx.lineWidth = 1; vx.beginPath(); vx.moveTo(x, M.t); vx.lineTo(x, M.t + ph); vx.moveTo(M.l, y); vx.lineTo(M.l + pw, y); vx.stroke();
+  vx.fillStyle = "#ffb000"; vx.beginPath(); vx.arc(x, y, 5, 0, 7); vx.fill();
+  // beste punkt
+  if (best) { vx.strokeStyle = "#ff4d6d"; vx.lineWidth = 2; vx.beginPath(); vx.arc(M.l + pw * (best.dag - 0.5) / 365, M.t + ph * best.min / 1440, 7, 0, 7); vx.stroke(); }
+}
+vc.addEventListener("click", (e) => {
+  const r = vc.getBoundingClientRect();
+  const x = e.clientX - r.left - M.l, y = e.clientY - r.top - M.t;
+  const pw = vc.clientWidth - M.l - M.r, ph = vc.clientHeight - M.t - M.b;
+  if (x < 0 || y < 0 || x > pw || y > ph) return;
+  tilstand.dag = Math.min(365, Math.max(1, Math.floor(x / pw * 365) + 1));
+  tilstand.min = Math.floor(y / ph * 1440 / 5) * 5;
+  oppdater();
+});
+
+// ---------- Oppsummering ----------
+let best = null;
+function lagFunn() {
+  const per = funn(tilstand.tol);
+  best = per.reduce((a, b) => (b.v > a.v ? b : a));
+  const perioder = hengePerioder();
+  const rad = (p) => `<tr class="klikk" data-d="${p.midt}" data-m="${p.min}"><td>${fmtDato(p.fra)} – ${fmtDato(p.til)}<br><span class="note">${TXT.days(p.dager)}</span></td><td>${fmtTid(p.min)}</td><td>${(p.min < 720 ? TXT.rise : TXT.set)(kompassNavn(p.az))}<br><span class="note" style="color:${p.farge}">${TXT.along(gateNavn(p.akse))}</span></td></tr>`;
+  $("funn").innerHTML = `
+    <table><tr>${TXT.th.map((x) => `<th>${x}</th>`).join("")}</tr>${perioder.map(rad).join("")}</table>
+    <p class="note">${TXT.hengeNote(HENGE_TOL, HENGE_H)}</p>`;
+  for (const tr of $("funn").querySelectorAll("tr.klikk")) tr.onclick = () => { tilstand.dag = +tr.dataset.d; tilstand.min = +tr.dataset.m; oppdater(); };
+}
+
+/** Henge-perioder: sammenhengende dager der sola peker langs en hovedakse mens den er lavere enn HENGE_H */
+function hengePerioder() {
+  const ut = [];
+  [AKSE_A, AKSE_B].forEach((akse, n) => {
+    const dager = [];
+    for (let d = 1; d <= 365; d++) {
+      let b = null;
+      for (let k = 0; k < NSLOT; k++) {
+        const i = (d - 1) * NSLOT + k;
+        if (sim.h[i] <= 0 || sim.h[i] > HENGE_H) continue;
+        const df = vinkelDiff(sim.az[i], akse);
+        if (df <= HENGE_TOL && (!b || df < b.df)) b = { df, min: k * SLOT, az: sim.az[i] };
+      }
+      if (b) dager.push({ d, ...b });
+    }
+    let gr = [];
+    const lukk = () => {
+      if (!gr.length) return;
+      const m = gr[Math.floor(gr.length / 2)];
+      ut.push({ akse, farge: AKSE_FARGE[n], fra: gr[0].d, til: gr[gr.length - 1].d, dager: gr.length, midt: m.d, min: m.min, az: m.az });
+      gr = [];
+    };
+    for (const x of dager) { if (gr.length && x.d - gr[gr.length - 1].d > 2) lukk(); gr.push(x); }
+    lukk();
+  });
+  return ut.sort((a, b) => a.fra - b.fra);
+}
+
+// ---------- Toppunkter: når peker sola langs hver av de to hovedretningene? ----------
+const kompassNavn = (az) => TXT.dirs[Math.round(az / 45) % 8];
+const gateNavn = (akse) => TXT.streets(kompassNavn(akse), kompassNavn((akse + 180) % 360));
+const AKSE_FARGE = ["#56b4e9", "#cc79a7"];
+/** For hver hovedakse: tidspunktet den dagen sola peker best langs aksen. Der sola treffer to ganger (sommer),
+ *  velges øyeblikket med høyest sol, så lyset faktisk er synlig over takene. */
+function toppunkter(dag) {
+  const ut = [];
+  for (const akse of [AKSE_A, AKSE_B]) {
+    let best = null, vindu = [];
+    const lukk = () => {
+      if (!vindu.length) return;
+      const m = vindu.reduce((a, b) => (vinkelDiff(sim.az[b], akse) < vinkelDiff(sim.az[a], akse) ? b : a));
+      if (!best || sim.h[m] > sim.h[best]) best = m;
+      vindu = [];
+    };
+    for (let k = 0; k < NSLOT; k++) {
+      const i = (dag - 1) * NSLOT + k;
+      if (sim.h[i] > 0 && vinkelDiff(sim.az[i], akse) <= 3) vindu.push(i); else lukk();
+    }
+    lukk();
+    if (best !== null) { const k = best - (dag - 1) * NSLOT; ut.push({ akse, min: k * SLOT, az: sim.az[best], h: sim.h[best], farge: AKSE_FARGE[akse === AKSE_A ? 0 : 1] }); }
+  }
+  return ut.sort((a, b) => a.min - b.min);
+}
+function tegnTopp(dag) {
+  const tp = toppunkter(dag);
+  $("tidmerker").innerHTML = tp.map((p) => `<button class="merke" style="left:calc(8px + (100% - 16px) * ${p.min / 1435});--c:${p.farge}" data-m="${p.min}" title="${TXT.tip(p.akse)}"><i></i>${fmtTid(p.min)}</button>`).join("");
+  for (const b of $("tidmerker").querySelectorAll("button")) b.onclick = () => { tilstand.min = +b.dataset.m; oppdater(); };
+  const nar = dag === DAG_I_DAG ? TXT.today : TXT.onDate(fmtDato(dag));
+  const del = tp.map((p) => TXT.peak(fmtTid(p.min), kompassNavn(p.az), p.h.toFixed(0), { c: p.farge, txt: gateNavn(p.akse) }));
+  $("idag").innerHTML = tp.length ? TXT.look(nar, del) : TXT.none(nar);
+}
+
+// ---------- Tilstand og UI ----------
+function dagIDag() { const n = new Date(), d = Math.floor((Date.UTC(AAR, n.getMonth(), n.getDate()) - Date.UTC(AAR, 0, 1)) / 864e5) + 1; return d; }
+function minINu() {
+  const p = Object.fromEntries(osloFmt.formatToParts(new Date()).map((x) => [x.type, x.value]));
+  return Math.min(1435, Math.floor((+p.hour % 24 * 60 + +p.minute) / 5) * 5);
+}
+const tilstand = { dag: dagIDag(), min: minINu(), tol: TOLERANSE };
+const DAG_I_DAG = dagIDag();
+let spiller = null;
+function oppdater(full = false) {
+  const { dag, min, tol } = tilstand;
+  $("dag").value = dag; $("dato").value = datoFraDag(dag).toISOString().slice(0, 10);
+  $("tid").value = min; $("tidut").textContent = fmtTid(min);
+  $("sTol").textContent = tol;
+  tegnTopp(dag);
+  const s = sol(dag, min), a = s.h > 0 ? andel(s.az, tol) : 0;
+  $("sAz").textContent = s.h > 0 ? s.az.toFixed(1) + "°" : "–";
+  $("sH").textContent = s.h.toFixed(1) + "°";
+  $("sAndel").textContent = (a * 100).toFixed(0) + " %";
+  tegnKart(s, tol); tegnPolar(s, tol); tegnVarme(dag, min);
+}
+function omregn() { andelGrid = simAndel(tilstand.tol); lagVarme(); lagFunn(); }
+
+$("dag").oninput = (e) => { tilstand.dag = +e.target.value; oppdater(); };
+$("dato").onchange = (e) => { const d = Math.floor((Date.parse(e.target.value) - Date.UTC(AAR, 0, 1)) / 864e5) + 1; if (d >= 1 && d <= 365) { tilstand.dag = d; oppdater(); } };
+$("tid").oninput = (e) => { tilstand.min = +e.target.value; oppdater(); };
+$("spill").onclick = () => {
+  if (spiller) { clearInterval(spiller); spiller = null; $("spill").textContent = TXT.play; return; }
+  $("spill").textContent = TXT.stop;
+  spiller = setInterval(() => { tilstand.min = (tilstand.min + 5) % 1440; oppdater(); }, 120);
+};
+$("entropi").textContent = TXT.entropi(entropi().toFixed(2).replace(".", LANG === "en" ? "." : ","));
+
+let sistBredde = innerWidth;
+addEventListener("resize", () => { if (innerWidth !== sistBredde) { sistBredde = innerWidth; oppdater(); } });
+if (smal()) document.querySelector("details.om").open = false;
+omregn(); oppdater();
+// for testing i node
+if (typeof module !== "undefined") module.exports = { sim, andelGrid, funn, AKSE_A, AKSE_B };
+</script>
+</body></html>
