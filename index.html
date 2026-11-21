@@ -37,19 +37,52 @@ tr.klikk{cursor:pointer}tr.klikk:hover{background:#1f2c3a}
 .merke:hover{background:none;text-decoration:underline}
 .merke i{display:block;width:3px;height:9px;margin:0 auto 1px;background:var(--c);border-radius:2px}
 header a{color:var(--sun)}
+#kart{aspect-ratio:900/640}
+#polar{aspect-ratio:1/1;max-width:520px;margin:auto}
+#varme{aspect-ratio:1200/360}
+details.om summary{cursor:pointer;color:var(--mut);font-size:13px;margin-bottom:4px}
+details.om[open] summary{display:none}
+@media(max-width:600px){
+  body{font-size:14px}
+  header{padding:10px 12px 2px}
+  h1{font-size:18px}
+  .idag{font-size:15px;line-height:1.4;margin:4px 0 8px!important}
+  details.om summary{display:block!important;margin:0 0 4px}
+  main{padding:6px 8px 28px;gap:10px}
+  .card{padding:8px;border-radius:8px}
+  .hide-m{display:none}
+  #kart{aspect-ratio:1/1;max-height:68vh;touch-action:pan-y}
+  .controls{gap:6px;margin-top:6px}
+  .row{grid-template-columns:1fr auto;gap:2px 10px}
+  .row label{grid-column:1/-1;font-size:12px}
+  .row-dato input[type=range]{grid-column:1}
+  input[type=range]{height:34px;margin:0}
+  input[type=date],button{font-size:16px;min-height:40px}
+  .row output{font-size:18px;font-weight:600}
+  .sliderwrap{padding-bottom:38px}
+  #tidmerker{top:28px}
+  .merke{font-size:13px;padding:2px 6px}
+  #spill{width:100%}
+  .stats{gap:6px}
+  .stat{padding:6px 8px}
+  .stat b{font-size:16px}
+  .stat span{font-size:11px;line-height:1.2;display:block}
+  #varme{aspect-ratio:4/3}
+  td,th{padding:6px 4px}
+}
 </style></head>
 <body>
 <header>
-  <h1>KvadraturHenge</h1>
+  <h1>☀️ KvadraturHenge</h1>
   <p id="idag" class="idag"></p>
-  <p>Som <a href="https://en.wikipedia.org/wiki/Manhattanhenge" target="_blank" rel="noopener">Manhattanhenge</a>, bare i Kristiansand: Kvadraturen er et rutenett fra 1641. Her regner vi ut for hvert tidspunkt gjennom året hvor stor del av gatene solen peker rett langs, og søker etter øyeblikket da solen skinner gjennom <em>alle</em> gatene samtidig.</p>
+  <details class="om" open><summary>Hva er dette?</summary><p>Som <a href="https://en.wikipedia.org/wiki/Manhattanhenge" target="_blank" rel="noopener">Manhattanhenge</a>, bare i Kristiansand: Kvadraturen er et rutenett fra 1641. Her regner vi ut for hvert tidspunkt gjennom året hvor stor del av gatene solen peker rett langs, og søker etter øyeblikket da solen skinner gjennom <em>alle</em> gatene samtidig.</p></details>
 </header>
 <main>
   <section class="card">
-    <h2>Kart</h2>
-    <canvas id="kart" width="900" height="640"></canvas>
+    <h2 class="hide-m">Kart</h2>
+    <canvas id="kart"></canvas>
     <div class="controls">
-      <div class="row"><label>Dato</label><input type="range" id="dag" min="1" max="365"><input type="date" id="dato" min="2026-01-01" max="2026-12-31"></div>
+      <div class="row row-dato"><label>Dato</label><input type="range" id="dag" min="1" max="365"><input type="date" id="dato" min="2026-01-01" max="2026-12-31"></div>
       <div class="row"><label>Klokkeslett</label><div class="sliderwrap"><input type="range" id="tid" min="0" max="1435" step="5"><div id="tidmerker"></div></div><output id="tidut"></output></div>
             <div><button id="spill">▶ Spill av dagen</button></div>
     </div>
@@ -58,18 +91,18 @@ header a{color:var(--sun)}
       <div class="stat"><b id="sH">–</b><span>solhøyde</span></div>
       <div class="stat"><b id="sAndel">–</b><span>av gatelengden i solretning (±<span id="sTol"></span>°)</span></div>
     </div>
-    <p class="note">Gater farges etter hvor nær solretningen de ligger: gult = solen peker langs gata, mørkt = solen står på tvers. Tid er norsk lokaltid (sommertid medregnet).</p>
+    <p class="note hide-m">Gater farges etter hvor nær solretningen de ligger: gult = solen peker langs gata, mørkt = solen står på tvers. Tid er norsk lokaltid (sommertid medregnet).</p>
   </section>
   <section class="card">
     <h2>Gateretninger</h2>
-    <canvas id="polar" width="520" height="520"></canvas>
+    <canvas id="polar"></canvas>
     <p class="note" id="entropi"></p>
     <h2 style="margin-top:14px">Henge-datoer 2026</h2>
     <div id="funn"></div>
   </section>
   <section class="card wide">
     <h2>Hele året: andel av gatene i solretning (klikk for å hoppe til tidspunkt)</h2>
-    <canvas id="varme" width="1200" height="360"></canvas>
+    <canvas id="varme"></canvas>
     <p class="note">X: dato. Y: klokkeslett. Lysere = større andel av gatelengden peker mot sola. Mørkt område er natt (sola under horisonten). Hoppet i mars og oktober er overgangen til og fra sommertid.</p>
   </section>
 </main>
@@ -505,12 +538,20 @@ function funn(tol) {
 
 // ---------- Tegning ----------
 const kart = $("kart"), kc = kart.getContext("2d");
+/** Tilpass canvas til CSS-størrelsen (skarpt på retina) og returner CSS-piksler. Tegning skjer i CSS-piksler. */
+function klargjor(cv, ctx) {
+  const dpr = window.devicePixelRatio || 1, W = cv.clientWidth, H = cv.clientHeight;
+  if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return [W, H];
+}
+const smal = () => window.matchMedia("(max-width:600px)").matches;
 const bounds = (() => {
   let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
   for (const g of GATER) for (const [lo, la] of g.coords) { x0 = Math.min(x0, lo); x1 = Math.max(x1, lo); y0 = Math.min(y0, la); y1 = Math.max(y1, la); }
   return { x0, x1, y0, y1 };
 })();
-function proj(lo, la, W, H, pad = 40) {
+function proj(lo, la, W, H, pad = smal() ? 22 : 40) {
   const w = (bounds.x1 - bounds.x0) * mPerLon, h = (bounds.y1 - bounds.y0) * mPerLat;
   const sc = Math.min((W - 2 * pad) / w, (H - 2 * pad) / h);
   return [W / 2 + ((lo - (bounds.x0 + bounds.x1) / 2) * mPerLon) * sc, H / 2 - ((la - (bounds.y0 + bounds.y1) / 2) * mPerLat) * sc];
@@ -521,7 +562,7 @@ function mixFarge(t) { // 0 = mørk blågrå, 1 = gul
 }
 
 function tegnKart(s, tol) {
-  const W = kart.width, H = kart.height;
+  const [W, H] = klargjor(kart, kc);
   kc.clearRect(0, 0, W, H);
   const oppe = s.h > 0;
   // gater
@@ -562,7 +603,7 @@ function tegnKart(s, tol) {
 
 const pol = $("polar"), pc = pol.getContext("2d");
 function tegnPolar(s, tol) {
-  const W = pol.width, c = W / 2, R = c - 46;
+  const [W] = klargjor(pol, pc), c = W / 2, R = c - 40;
   pc.clearRect(0, 0, W, W);
   pc.strokeStyle = "#2a3846"; pc.fillStyle = "#8b9bab"; pc.font = "14px system-ui"; pc.textAlign = "center"; pc.textBaseline = "middle"; pc.lineWidth = 1;
   for (const f of [0.5, 1]) { pc.beginPath(); pc.arc(c, c, R * f, 0, 7); pc.stroke(); }
@@ -608,11 +649,13 @@ function viridisLik(t) { // enkel Viridis-interpolasjon
 }
 const M = { l: 48, r: 10, t: 8, b: 26 };
 function tegnVarme(dag, min) {
-  const W = vc.width, H = vc.height, pw = W - M.l - M.r, ph = H - M.t - M.b;
+  const [W, H] = klargjor(vc, vx);
+  M.l = smal() ? 36 : 48; M.r = smal() ? 6 : 10;
+  const pw = W - M.l - M.r, ph = H - M.t - M.b;
   vx.clearRect(0, 0, W, H);
   vx.imageSmoothingEnabled = false;
   vx.drawImage(img, M.l, M.t, pw, ph);
-  vx.fillStyle = "#8b9bab"; vx.font = "12px system-ui"; vx.textAlign = "right"; vx.textBaseline = "middle";
+  vx.fillStyle = "#8b9bab"; vx.font = (smal() ? 10 : 12) + "px system-ui"; vx.textAlign = "right"; vx.textBaseline = "middle";
   for (let h = 0; h <= 24; h += 4) { const y = M.t + ph * h / 24; vx.fillText(String(h).padStart(2, "0") + ":00", M.l - 6, y); vx.strokeStyle = "rgba(255,255,255,.08)"; vx.beginPath(); vx.moveTo(M.l, y); vx.lineTo(W - M.r, y); vx.stroke(); }
   vx.textAlign = "center"; vx.textBaseline = "top";
   for (let m = 0; m < 12; m++) { const d = Math.floor((Date.UTC(AAR, m, 1) - Date.UTC(AAR, 0, 1)) / 864e5); vx.fillText(["jan", "feb", "mar", "apr", "mai", "jun", "jul", "aug", "sep", "okt", "nov", "des"][m], M.l + pw * (d + 15) / 365, H - M.b + 6); }
@@ -624,9 +667,9 @@ function tegnVarme(dag, min) {
   if (best) { vx.strokeStyle = "#ff4d6d"; vx.lineWidth = 2; vx.beginPath(); vx.arc(M.l + pw * (best.dag - 0.5) / 365, M.t + ph * best.min / 1440, 7, 0, 7); vx.stroke(); }
 }
 vc.addEventListener("click", (e) => {
-  const r = vc.getBoundingClientRect(), sx = vc.width / r.width;
-  const x = (e.clientX - r.left) * sx - M.l, y = (e.clientY - r.top) * sx - M.t;
-  const pw = vc.width - M.l - M.r, ph = vc.height - M.t - M.b;
+  const r = vc.getBoundingClientRect();
+  const x = e.clientX - r.left - M.l, y = e.clientY - r.top - M.t;
+  const pw = vc.clientWidth - M.l - M.r, ph = vc.clientHeight - M.t - M.b;
   if (x < 0 || y < 0 || x > pw || y > ph) return;
   tilstand.dag = Math.min(365, Math.max(1, Math.floor(x / pw * 365) + 1));
   tilstand.min = Math.floor(y / ph * 1440 / 5) * 5;
@@ -710,7 +753,11 @@ function tegnTopp(dag) {
 
 // ---------- Tilstand og UI ----------
 function dagIDag() { const n = new Date(), d = Math.floor((Date.UTC(AAR, n.getMonth(), n.getDate()) - Date.UTC(AAR, 0, 1)) / 864e5) + 1; return d; }
-const tilstand = { dag: dagIDag(), min: 12 * 60, tol: TOLERANSE };
+function minINu() {
+  const p = Object.fromEntries(osloFmt.formatToParts(new Date()).map((x) => [x.type, x.value]));
+  return Math.min(1435, Math.floor((+p.hour % 24 * 60 + +p.minute) / 5) * 5);
+}
+const tilstand = { dag: dagIDag(), min: minINu(), tol: TOLERANSE };
 const DAG_I_DAG = dagIDag();
 let spiller = null;
 function oppdater(full = false) {
@@ -737,6 +784,9 @@ $("spill").onclick = () => {
 };
 $("entropi").textContent = `Lengdevektet orientasjonsentropi: ${entropi().toFixed(2)} (skala: 1,39 = perfekt rutenett, 3,58 = helt uordnet). Gult felt = gater solen peker langs akkurat nå.`;
 
+let sistBredde = innerWidth;
+addEventListener("resize", () => { if (innerWidth !== sistBredde) { sistBredde = innerWidth; oppdater(); } });
+if (smal()) document.querySelector("details.om").open = false;
 omregn(); oppdater();
 // for testing i node
 if (typeof module !== "undefined") module.exports = { sim, andelGrid, funn, AKSE_A, AKSE_B };

@@ -34,3 +34,36 @@ tr.klikk{cursor:pointer}tr.klikk:hover{background:#1f2c3a}
 .merke:hover{background:none;text-decoration:underline}
 .merke i{display:block;width:3px;height:9px;margin:0 auto 1px;background:var(--c);border-radius:2px}
 header a{color:var(--sun)}
+#kart{aspect-ratio:900/640}
+#polar{aspect-ratio:1/1;max-width:520px;margin:auto}
+#varme{aspect-ratio:1200/360}
+details.om summary{cursor:pointer;color:var(--mut);font-size:13px;margin-bottom:4px}
+details.om[open] summary{display:none}
+@media(max-width:600px){
+  body{font-size:14px}
+  header{padding:10px 12px 2px}
+  h1{font-size:18px}
+  .idag{font-size:15px;line-height:1.4;margin:4px 0 8px!important}
+  details.om summary{display:block!important;margin:0 0 4px}
+  main{padding:6px 8px 28px;gap:10px}
+  .card{padding:8px;border-radius:8px}
+  .hide-m{display:none}
+  #kart{aspect-ratio:1/1;max-height:68vh;touch-action:pan-y}
+  .controls{gap:6px;margin-top:6px}
+  .row{grid-template-columns:1fr auto;gap:2px 10px}
+  .row label{grid-column:1/-1;font-size:12px}
+  .row-dato input[type=range]{grid-column:1}
+  input[type=range]{height:34px;margin:0}
+  input[type=date],button{font-size:16px;min-height:40px}
+  .row output{font-size:18px;font-weight:600}
+  .sliderwrap{padding-bottom:38px}
+  #tidmerker{top:28px}
+  .merke{font-size:13px;padding:2px 6px}
+  #spill{width:100%}
+  .stats{gap:6px}
+  .stat{padding:6px 8px}
+  .stat b{font-size:16px}
+  .stat span{font-size:11px;line-height:1.2;display:block}
+  #varme{aspect-ratio:4/3}
+  td,th{padding:6px 4px}
+}

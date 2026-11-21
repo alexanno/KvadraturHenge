@@ -110,12 +110,20 @@ function funn(tol) {
 
 // ---------- Tegning ----------
 const kart = $("kart"), kc = kart.getContext("2d");
+/** Tilpass canvas til CSS-størrelsen (skarpt på retina) og returner CSS-piksler. Tegning skjer i CSS-piksler. */
+function klargjor(cv, ctx) {
+  const dpr = window.devicePixelRatio || 1, W = cv.clientWidth, H = cv.clientHeight;
+  if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return [W, H];
+}
+const smal = () => window.matchMedia("(max-width:600px)").matches;
 const bounds = (() => {
   let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
   for (const g of GATER) for (const [lo, la] of g.coords) { x0 = Math.min(x0, lo); x1 = Math.max(x1, lo); y0 = Math.min(y0, la); y1 = Math.max(y1, la); }
   return { x0, x1, y0, y1 };
 })();
-function proj(lo, la, W, H, pad = 40) {
+function proj(lo, la, W, H, pad = smal() ? 22 : 40) {
   const w = (bounds.x1 - bounds.x0) * mPerLon, h = (bounds.y1 - bounds.y0) * mPerLat;
   const sc = Math.min((W - 2 * pad) / w, (H - 2 * pad) / h);
   return [W / 2 + ((lo - (bounds.x0 + bounds.x1) / 2) * mPerLon) * sc, H / 2 - ((la - (bounds.y0 + bounds.y1) / 2) * mPerLat) * sc];
@@ -126,7 +134,7 @@ function mixFarge(t) { // 0 = mørk blågrå, 1 = gul
 }
 
 function tegnKart(s, tol) {
-  const W = kart.width, H = kart.height;
+  const [W, H] = klargjor(kart, kc);
   kc.clearRect(0, 0, W, H);
   const oppe = s.h > 0;
   // gater
@@ -167,7 +175,7 @@ function tegnKart(s, tol) {
 
 const pol = $("polar"), pc = pol.getContext("2d");
 function tegnPolar(s, tol) {
-  const W = pol.width, c = W / 2, R = c - 46;
+  const [W] = klargjor(pol, pc), c = W / 2, R = c - 40;
   pc.clearRect(0, 0, W, W);
   pc.strokeStyle = "#2a3846"; pc.fillStyle = "#8b9bab"; pc.font = "14px system-ui"; pc.textAlign = "center"; pc.textBaseline = "middle"; pc.lineWidth = 1;
   for (const f of [0.5, 1]) { pc.beginPath(); pc.arc(c, c, R * f, 0, 7); pc.stroke(); }
@@ -213,11 +221,13 @@ function viridisLik(t) { // enkel Viridis-interpolasjon
 }
 const M = { l: 48, r: 10, t: 8, b: 26 };
 function tegnVarme(dag, min) {
-  const W = vc.width, H = vc.height, pw = W - M.l - M.r, ph = H - M.t - M.b;
+  const [W, H] = klargjor(vc, vx);
+  M.l = smal() ? 36 : 48; M.r = smal() ? 6 : 10;
+  const pw = W - M.l - M.r, ph = H - M.t - M.b;
   vx.clearRect(0, 0, W, H);
   vx.imageSmoothingEnabled = false;
   vx.drawImage(img, M.l, M.t, pw, ph);
-  vx.fillStyle = "#8b9bab"; vx.font = "12px system-ui"; vx.textAlign = "right"; vx.textBaseline = "middle";
+  vx.fillStyle = "#8b9bab"; vx.font = (smal() ? 10 : 12) + "px system-ui"; vx.textAlign = "right"; vx.textBaseline = "middle";
   for (let h = 0; h <= 24; h += 4) { const y = M.t + ph * h / 24; vx.fillText(String(h).padStart(2, "0") + ":00", M.l - 6, y); vx.strokeStyle = "rgba(255,255,255,.08)"; vx.beginPath(); vx.moveTo(M.l, y); vx.lineTo(W - M.r, y); vx.stroke(); }
   vx.textAlign = "center"; vx.textBaseline = "top";
   for (let m = 0; m < 12; m++) { const d = Math.floor((Date.UTC(AAR, m, 1) - Date.UTC(AAR, 0, 1)) / 864e5); vx.fillText(["jan", "feb", "mar", "apr", "mai", "jun", "jul", "aug", "sep", "okt", "nov", "des"][m], M.l + pw * (d + 15) / 365, H - M.b + 6); }
@@ -229,9 +239,9 @@ function tegnVarme(dag, min) {
   if (best) { vx.strokeStyle = "#ff4d6d"; vx.lineWidth = 2; vx.beginPath(); vx.arc(M.l + pw * (best.dag - 0.5) / 365, M.t + ph * best.min / 1440, 7, 0, 7); vx.stroke(); }
 }
 vc.addEventListener("click", (e) => {
-  const r = vc.getBoundingClientRect(), sx = vc.width / r.width;
-  const x = (e.clientX - r.left) * sx - M.l, y = (e.clientY - r.top) * sx - M.t;
-  const pw = vc.width - M.l - M.r, ph = vc.height - M.t - M.b;
+  const r = vc.getBoundingClientRect();
+  const x = e.clientX - r.left - M.l, y = e.clientY - r.top - M.t;
+  const pw = vc.clientWidth - M.l - M.r, ph = vc.clientHeight - M.t - M.b;
   if (x < 0 || y < 0 || x > pw || y > ph) return;
   tilstand.dag = Math.min(365, Math.max(1, Math.floor(x / pw * 365) + 1));
   tilstand.min = Math.floor(y / ph * 1440 / 5) * 5;
@@ -346,6 +356,9 @@ $("spill").onclick = () => {
 };
 $("entropi").textContent = `Lengdevektet orientasjonsentropi: ${entropi().toFixed(2)} (skala: 1,39 = perfekt rutenett, 3,58 = helt uordnet). Gult felt = gater solen peker langs akkurat nå.`;
 
+let sistBredde = innerWidth;
+addEventListener("resize", () => { if (innerWidth !== sistBredde) { sistBredde = innerWidth; oppdater(); } });
+if (smal()) document.querySelector("details.om").open = false;
 omregn(); oppdater();
 // for testing i node
 if (typeof module !== "undefined") module.exports = { sim, andelGrid, funn, AKSE_A, AKSE_B };
