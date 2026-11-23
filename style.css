@@ -69,3 +69,8 @@ details.om[open] summary{display:none}
 }
 
 header p.lang{font-size:13px;margin-bottom:6px}header p.lang a{color:var(--sun)}
+
+.hero{margin:0 0 12px;position:relative;border-radius:10px;overflow:hidden;background:#111a23}
+.hero img{display:block;width:100%;height:auto;aspect-ratio:21/9;object-fit:cover;object-position:50% 47%}
+.hero figcaption{position:absolute;left:0;right:0;bottom:0;padding:22px 14px 8px;font-size:13px;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.65))}
+@media(max-width:600px){.hero{margin-bottom:8px;border-radius:8px}.hero img{aspect-ratio:2.4/1}.hero figcaption{display:none}}

@@ -1,6 +1,8 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>KvadraturHenge – when the sun lines up with the streets of Kristiansand</title>
+<meta name="description" content="Norway's answer to Manhattanhenge: find when the sun shines straight down the streets of Kvadraturen in Kristiansand.">
+<meta property="og:type" content="website"><meta property="og:title" content="KvadraturHenge – when the sun lines up with the streets of Kristiansand"><meta property="og:description" content="Norway's answer to Manhattanhenge: find when the sun shines straight down the streets of Kvadraturen in Kristiansand."><meta property="og:image" content="https://alexanno.github.io/KvadraturHenge/img/kvadraturhenge.jpg"><meta name="twitter:card" content="summary_large_image">
 <style>:root{--bg:#0f1720;--panel:#17212c;--line:#2a3846;--fg:#e6edf3;--mut:#8b9bab;--sun:#ffb000;--street:#3b4d60}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 system-ui,-apple-system,Segoe UI,sans-serif}
@@ -72,9 +74,15 @@ details.om[open] summary{display:none}
 }
 
 header p.lang{font-size:13px;margin-bottom:6px}header p.lang a{color:var(--sun)}
+
+.hero{margin:0 0 12px;position:relative;border-radius:10px;overflow:hidden;background:#111a23}
+.hero img{display:block;width:100%;height:auto;aspect-ratio:21/9;object-fit:cover;object-position:50% 47%}
+.hero figcaption{position:absolute;left:0;right:0;bottom:0;padding:22px 14px 8px;font-size:13px;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.65))}
+@media(max-width:600px){.hero{margin-bottom:8px;border-radius:8px}.hero img{aspect-ratio:2.4/1}.hero figcaption{display:none}}
 </style></head>
 <body>
 <header>
+  <figure class="hero"><img src="img/kvadraturhenge.jpg" alt="Morning sun shining straight down a street in Kvadraturen, Kristiansand" width="1200" height="1600" fetchpriority="high"><figcaption>This is what it looks like: the sun right at the end of the street, Kvadraturen, 23 November at 08:51.</figcaption></figure>
   <h1>☀️ KvadraturHenge</h1>
   <p class="lang"><a href="index.html">Norsk</a> · English</p>
   <p id="idag" class="idag"></p>
