@@ -7,13 +7,13 @@ gater = Path("data/kvadraturen.json").read_text()
 BASE = "https://alexanno.github.io/KvadraturHenge/"
 
 
-def bygg(ut: str, lang: str, body: str, tittel: str, beskrivelse: str) -> None:
-    bilde = BASE + "img/kvadraturhenge.jpg"
+def bygg(ut: str, lang: str, body: str, tittel: str, beskrivelse: str, alt: str) -> None:
+    bilde = BASE + "img/og.jpg"
     html = f"""<!doctype html>
 <html lang="{lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{tittel}</title>
 <meta name="description" content="{beskrivelse}">
-<meta property="og:type" content="website"><meta property="og:title" content="{tittel}"><meta property="og:description" content="{beskrivelse}"><meta property="og:image" content="{bilde}"><meta name="twitter:card" content="summary_large_image">
+<meta property="og:type" content="website"><meta property="og:title" content="{tittel}"><meta property="og:description" content="{beskrivelse}"><meta property="og:image" content="{bilde}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="{alt}"><meta name="twitter:card" content="summary_large_image">
 <style>{Path("style.css").read_text()}</style></head>
 <body>
 {Path(body).read_text()}
@@ -26,5 +26,5 @@ def bygg(ut: str, lang: str, body: str, tittel: str, beskrivelse: str) -> None:
     print(ut, round(len(html) / 1024), "kB")
 
 
-bygg("index.html", "nb", "body.html", "KvadraturHenge", "Når står solen rett langs gatene i Kvadraturen i Kristiansand? Norges svar på Manhattanhenge.")
-bygg("en.html", "en", "body_en.html", "KvadraturHenge – when the sun lines up with the streets of Kristiansand", "Norway's answer to Manhattanhenge: find when the sun shines straight down the streets of Kvadraturen in Kristiansand.")
+bygg("index.html", "nb", "body.html", "KvadraturHenge", "Når står solen rett langs gatene i Kvadraturen i Kristiansand? Norges svar på Manhattanhenge.", "Morgensol som skinner rett langs en gate i Kvadraturen i Kristiansand")
+bygg("en.html", "en", "body_en.html", "KvadraturHenge – when the sun lines up with the streets of Kristiansand", "Norway's answer to Manhattanhenge: find when the sun shines straight down the streets of Kvadraturen in Kristiansand.", "Morning sun shining straight down a street in Kvadraturen, Kristiansand")
